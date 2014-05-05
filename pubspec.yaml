@@ -1,0 +1,6 @@
+name: remote_services
+description: A complete abstraction of client <-> server communication
+dependencies:
+  logging: any
+dev_dependencies:
+  unittest: any
