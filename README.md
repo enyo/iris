@@ -60,7 +60,7 @@ main() {
 
   String email = "e@mail.com", password = "password";
 
-  services.userService.auth(new AuthenticationRequest()..email=email..password=passowrd)
+  services.userService.auth(new AuthenticationRequest()..email=email..password=password)
       .then((User user) => doSomething(user));
 
 }
