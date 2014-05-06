@@ -50,14 +50,21 @@ And in you `build.dart` you set the script to generate the client classes:
 You import the generated classes from the server, and use the services like this:
 
 
-
 ```dart
-import "package:my_server/services.dart" as remote_services;
+import "package:remote_services/browser_client.dart";
 
-CreateUserRequest createUserRequest = getMessage();
-remote_services.userService.create(createUserRequest);
+main() {
+  var client = new HttpServiceClient(Uri.parse("http://localhost:8088"));
+
+  var services = new Services(client);
+
+  String email = "e@mail.com", password = "password";
+
+  services.userService.auth(new AuthenticationRequest()..email=email..password=passowrd)
+      .then((User user) => doSomething(user));
+
+}
 ```
-
 
 
 
