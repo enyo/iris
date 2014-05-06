@@ -28,7 +28,7 @@ part "src/service.dart";
  */
 class Context {
 
-   final RemoteServiceRequest request;
+   final ServiceRequest request;
 
    Context(this.request);
 }
@@ -43,7 +43,7 @@ typedef Future<bool> FilterFunction(Context context);
 /**
  * The type of context initializer functions
  */
-typedef Future<Context> ContextInitalizer(RemoteServiceRequest req);
+typedef Future<Context> ContextInitalizer(ServiceRequest req);
 
 
 
@@ -88,20 +88,27 @@ class RemoteServices {
   RemoteServices({this.contextInitializer});
 
 
-  List<ServiceRoute> _routes = [];
+  /// The list of all [ServiceRoute]s available.
+  List<ServiceRoute> routes = [];
 
-  List<ServiceRoute> get routes => _routes;
-
+  /// The list of all servers configured for those services.
+  List<ServiceServer> servers = [];
 
   /**
    * Checks the service, and creates a list of [ServiceRoute]s for every
    * [Route] found in the service.
    */
   addService(Service service) {
+    if (servers.length != 0) throw new RemoteServicesException("You can't add a service after servers have been added.");
+
     for (var annotatedRoute in annotation_crawler.annotatedDeclarations(annotations.Route, on: reflectClass(service.runtimeType))) {
 
       if (annotatedRoute.declaration is MethodMirror) {
         MethodMirror method = annotatedRoute.declaration;
+
+
+        /// Now check that the method is actually of type [RouteMethod].
+        /// See: http://stackoverflow.com/questions/23497032/how-do-check-if-a-methodmirror-implements-a-typedef
 
         TypeMirror returnType = method.returnType.typeArguments.first;
 
@@ -118,18 +125,29 @@ class RemoteServices {
           throw new InvalidServiceDeclaration("Every route needs to accept a Context and a GeneratedMessage object as parameters.", service);
         }
 
-        var _route = new ServiceRoute(service, method, method.parameters.last.type);
 
-        _routes.add(_route);
-
+        routes.add(new ServiceRoute(service, method, method.parameters.last.type));
       }
     }
   }
 
 
+  /**
+   * Sets all routes on the server and adds it to the list.
+   */
   addServer(ServiceServer server) {
-
+    server._setServiceRoutes(routes);
+    servers.add(server);
   }
+
+
+  /**
+   * Starts all servers
+   */
+  start() {
+    for (var server in servers) server.start();
+  }
+
 
 }
 

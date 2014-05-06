@@ -9,7 +9,7 @@ part of remote_services;
  *
  * You can access it with [Context.request].
  */
-class RemoteServiceRequest {
+class ServiceRequest {
 
 
   /// This attribute **always** returns an empty list for Socket connections
@@ -25,9 +25,9 @@ class RemoteServiceRequest {
 
   final HttpRequest _httpRequest;
 
-  RemoteServiceRequest.fromHttp(this._httpRequest);
+  ServiceRequest.fromHttp(this._httpRequest);
 
-  RemoteServiceRequest.fromSocket() : _httpRequest = null;
+  ServiceRequest.fromSocket() : _httpRequest = null;
 
 }
 
@@ -36,7 +36,17 @@ class RemoteServiceRequest {
 /**
  * The base class for servers.
  */
-class ServiceServer {
+abstract class ServiceServer {
+
+  List<ServiceRoute> _routes;
+
+  List<ServiceRoute> get routes => _routes;
+
+
+  _setServiceRoutes(List<ServiceRoute> routes) => _routes = routes;
+
+
+  void start();
 
 }
 

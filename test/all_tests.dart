@@ -3,6 +3,7 @@ import 'package:logging/logging.dart';
 
 import "remote_service_request_tests.dart" as requestTests;
 import "services_tests.dart" as servicesTests;
+import "server_tests.dart" as serverTests;
 
 
 main() {
@@ -12,5 +13,6 @@ main() {
 
   requestTests.main();
   servicesTests.main();
+  serverTests.main();
 
 }

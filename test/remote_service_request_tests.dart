@@ -12,7 +12,7 @@ main() {
 
   group("RemoteServiceRequest", () {
     test(".cookies returns empty Array if it's a socket connection", () {
-      var rsr = new RemoteServiceRequest.fromSocket();
+      var rsr = new ServiceRequest.fromSocket();
       expect(rsr.cookies, equals([]));
     });
     test(".cookies returns the cookies from HttpRequest if it's a HTTP request", () {
@@ -22,7 +22,7 @@ main() {
         cookie2 = new Cookie("name2", "value2");
 
       httpReq.when(callsTo("get cookies")).alwaysReturn([ cookie1, cookie2 ]);
-      var rsr = new RemoteServiceRequest.fromHttp(httpReq);
+      var rsr = new ServiceRequest.fromHttp(httpReq);
       expect(rsr.cookies, equals([ cookie1, cookie2 ]));
     });
   });

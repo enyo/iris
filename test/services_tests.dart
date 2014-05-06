@@ -16,6 +16,11 @@ class TestRequest implements GeneratedMessage { }
 class TestResponse implements GeneratedMessage { }
 class TestContext implements Context { }
 
+
+class TestServer extends Mock implements ServiceServer {
+
+}
+
 class TestService extends Service {
 
   @Route()
@@ -63,6 +68,35 @@ main() {
       services.addService(new TestService());
       services.routes.first.invoke(new TestContext(), new TestRequest());
     });
+
+    test("addService() throws if a server has already been set", () {
+      var services = new RemoteServices();
+      services.addService(new TestService());
+      services.addServer(new TestServer());
+      expect(() => services.addService(new TestService()), throws);
+    });
+
+    test("start() calls start() on all servers", () {
+      var services = new RemoteServices();
+      services.addService(new TestService());
+
+      var server1 = new TestServer();
+      var server2 = new TestServer();
+
+      services
+          ..addServer(server1)
+          ..addServer(server2);
+
+      expect(server1.calls("start").logs.length, equals(0));
+      expect(server2.calls("start").logs.length, equals(0));
+
+      services.start();
+
+      expect(server1.calls("start").logs.length, equals(1));
+      expect(server2.calls("start").logs.length, equals(1));
+
+    });
+
   });
 
 }
