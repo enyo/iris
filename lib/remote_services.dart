@@ -53,7 +53,7 @@ typedef Future<Context> ContextInitalizer(RemoteServiceRequest req);
  *
  * You can create [ServiceRoute]s by calling [RemoteServices.addService].
  */
-class ServiceRoute<C extends Context> {
+class ServiceRoute {
 
   /// The instance of the service this route will be called on.
   final Service service;
@@ -68,9 +68,9 @@ class ServiceRoute<C extends Context> {
 
   /**
    * Invokes the route with [Context] and the [requestMessage] and returns the
-   * resulting [GeneratedMessage] of type [M].
+   * resulting [GeneratedMessage].
    */
-  Future<GeneratedMessage> invoke(C context, GeneratedMessage requestMessage) {
+  Future<GeneratedMessage> invoke(Context context, GeneratedMessage requestMessage) {
     return reflect(service).invoke(method.simpleName, [context, requestMessage]).reflectee;
   }
 
@@ -81,7 +81,7 @@ class ServiceRoute<C extends Context> {
  * The base class for the remote_service server. This is your starting point for
  * a remote services server.
  */
-class RemoteServices<C extends Context> {
+class RemoteServices {
 
   final ContextInitalizer contextInitializer;
 
@@ -118,7 +118,7 @@ class RemoteServices<C extends Context> {
           throw new InvalidServiceDeclaration("Every route needs to accept a Context and a GeneratedMessage object as parameters.", service);
         }
 
-        var _route = new ServiceRoute<C>(service, method, method.parameters.last.type);
+        var _route = new ServiceRoute(service, method, method.parameters.last.type);
 
         _routes.add(_route);
 
