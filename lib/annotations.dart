@@ -13,7 +13,7 @@ class Route {
   final List<FilterFunction> filters;
 
 
-  const Route({this.filters});
+  const Route({this.filters: const []});
 
 }
 

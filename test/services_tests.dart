@@ -54,30 +54,36 @@ main() {
 
   group("Services", () {
     test("addService() should throw InvalidServiceDefinition if return type is no Future<GeneratedMessage>", () {
-      var services = new RemoteServices();
+      var services = new ServiceDefinitions();
       expect(() => services.addService(new NoGeneratedMessageRouteService()), throws);
     });
 
     test("addService() should throw InvalidServiceDefinition if accepted params are not Context and GeneratedMessage", () {
-      var services = new RemoteServices();
+      var services = new ServiceDefinitions();
       expect(() => services.addService(new WrongParamsRouteService()), throws);
     });
 
     test("addService() properly detects all routes", () {
-      var services = new RemoteServices();
+      var services = new ServiceDefinitions();
       services.addService(new TestService());
       services.routes.first.invoke(new TestContext(), new TestRequest());
     });
 
     test("addService() throws if a server has already been set", () {
-      var services = new RemoteServices();
+      var services = new ServiceDefinitions();
       services.addService(new TestService());
       services.addServer(new TestServer());
       expect(() => services.addService(new TestService()), throws);
     });
 
-    test("start() calls start() on all servers", () {
-      var services = new RemoteServices();
+    test("addServer() throws if no route has been added yet", (){
+      var services = new ServiceDefinitions();
+      expect(() => services.addServer(new TestServer()), throws);
+    });
+
+
+    test("start() calls start() on all servers and resolves Future when all are done", () {
+      var services = new ServiceDefinitions();
       services.addService(new TestService());
 
       var server1 = new TestServer();
@@ -87,13 +93,28 @@ main() {
           ..addServer(server1)
           ..addServer(server2);
 
+      server1.when(callsTo("start")).alwaysReturn(new Future.value());
+
+      var server2Completer = new Completer();
+
+      server2.when(callsTo("start")).alwaysReturn(server2Completer.future);
+
       expect(server1.calls("start").logs.length, equals(0));
       expect(server2.calls("start").logs.length, equals(0));
 
-      services.start();
+      var allFinished = false;
+      var finished = services.startServers();
+
+      finished.whenComplete(expectAsync(() => expect(allFinished, equals(true))));
 
       expect(server1.calls("start").logs.length, equals(1));
       expect(server2.calls("start").logs.length, equals(1));
+
+      new Timer(new Duration(milliseconds: 100), () {
+        allFinished = true;
+        server2Completer.complete();
+      });
+
 
     });
 

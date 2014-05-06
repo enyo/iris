@@ -1,13 +1,15 @@
-
 library remote_services;
 
 import "dart:io";
 export "dart:async";
 import "dart:async";
 import "dart:mirrors";
+import "dart:convert";
 
 
 
+import "package:logging/logging.dart";
+import "package:route/server.dart";
 import "package:protobuf/protobuf.dart";
 import "annotations.dart" as annotations;
 
@@ -18,6 +20,14 @@ import "package:annotation_crawler/annotation_crawler.dart" as annotation_crawle
 part "src/exceptions.dart";
 part "src/server.dart";
 part "src/service.dart";
+
+
+
+
+
+Logger log = new Logger("RemoteServices");
+
+
 
 /**
  * The base class for context classes. Every route gets an instance of this
@@ -43,7 +53,7 @@ typedef Future<bool> FilterFunction(Context context);
 /**
  * The type of context initializer functions
  */
-typedef Future<Context> ContextInitalizer(ServiceRequest req);
+typedef Future<Context> ContextInitializer(ServiceRequest req);
 
 
 
@@ -59,12 +69,21 @@ class ServiceRoute {
   final Service service;
 
   /// The expected [GeneratedMessage] type this route expects.
-  final TypeMirror expectedRequestType;
+  final Type expectedRequestType;
 
   /// The actual method to invoke when this route is called.
   final MethodMirror method;
 
-  ServiceRoute(this.service, this.method, this.expectedRequestType);
+  /// The list of filter functions for this specific route.
+  final List<FilterFunction> filterFunctions;
+
+
+
+  ServiceRoute(this.service, this.method, this.expectedRequestType, this.filterFunctions);
+
+  String get serviceName => service.runtimeType.toString();
+
+  String get methodName => MirrorSystem.getName(method.simpleName);
 
   /**
    * Invokes the route with [Context] and the [requestMessage] and returns the
@@ -81,11 +100,15 @@ class ServiceRoute {
  * The base class for the remote_service server. This is your starting point for
  * a remote services server.
  */
-class RemoteServices {
+class ServiceDefinitions {
 
-  final ContextInitalizer contextInitializer;
+  final ContextInitializer _contextInitializer;
 
-  RemoteServices({this.contextInitializer});
+  ContextInitializer get contextInitializer => _contextInitializer == null ? _defaultContextInitializer : _contextInitializer;
+
+  ServiceDefinitions([this._contextInitializer]);
+
+  Future<Context> _defaultContextInitializer(ServiceRequest req) => new Future.value(new Context(req));
 
 
   /// The list of all [ServiceRoute]s available.
@@ -106,6 +129,8 @@ class RemoteServices {
       if (annotatedRoute.declaration is MethodMirror) {
         MethodMirror method = annotatedRoute.declaration;
 
+        annotations.Route annotation = annotatedRoute.annotation;
+
 
         /// Now check that the method is actually of type [RouteMethod].
         /// See: http://stackoverflow.com/questions/23497032/how-do-check-if-a-methodmirror-implements-a-typedef
@@ -125,8 +150,9 @@ class RemoteServices {
           throw new InvalidServiceDeclaration("Every route needs to accept a Context and a GeneratedMessage object as parameters.", service);
         }
 
-
-        routes.add(new ServiceRoute(service, method, method.parameters.last.type));
+        var serviceRoute = new ServiceRoute(service, method, method.parameters.last.type.reflectedType, annotation.filters);
+        log.fine("Found route ${serviceRoute.methodName} on service ${serviceRoute.serviceName}");
+        routes.add(serviceRoute);
       }
     }
   }
@@ -136,7 +162,10 @@ class RemoteServices {
    * Sets all routes on the server and adds it to the list.
    */
   addServer(ServiceServer server) {
-    server._setServiceRoutes(routes);
+    if (routes.isEmpty) throw new RemoteServicesException("You tried to add a server but no routes have been added yet.");
+
+    server._routes = routes;
+    server._contextInitializer = contextInitializer;
     servers.add(server);
   }
 
@@ -144,8 +173,8 @@ class RemoteServices {
   /**
    * Starts all servers
    */
-  start() {
-    for (var server in servers) server.start();
+  Future startServers() {
+    return Future.wait(servers.map((server) => server.start()));
   }
 
 
@@ -154,64 +183,4 @@ class RemoteServices {
 
 
 
-
-
-
-
-
-
-//
-//Future<MyContext> initContext(RemoteServiceRequest req) {
-//
-//  var context = new MyContext();
-//
-//
-//  redisClient
-//  context.session = ""
-//
-//
-//}
-//
-//
-//Future<Context> initContext(RemoteServiceRequest req) => new Context(req);
-//
-//
-//Future<bool> authenticationFilter(MyContext context) {
-//
-//  context.loggedInUser
-//
-//}
-
-
-
-
-/*
-test() {
-
-
-  new RemoteServiceServer<Context>()
-    ..setContextInitializer(initContext);
-
-
-}
-
-
-@service
-class UserService {
-
-
-  /**
-   * DOCBLOCK
-   */
-  @Filter(authenticationFilter)
-  Future<CreateUserResponset> create(MyContext context, CreateUserRequest req) {
-
-  }
-
-
-}
-
-
-remoteServices.user.create();
-*/
 
