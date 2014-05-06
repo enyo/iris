@@ -6,5 +6,6 @@ dependencies:
     git: https://github.com/exitlive/annotation_crawler
   protobuf: any
   route: any
+  barback: any
 dev_dependencies:
   unittest: any

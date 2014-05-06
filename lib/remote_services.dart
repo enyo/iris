@@ -17,6 +17,7 @@ import "annotations.dart" as annotations;
 import "package:annotation_crawler/annotation_crawler.dart" as annotation_crawler;
 
 
+
 part "src/exceptions.dart";
 part "src/server.dart";
 part "src/service.dart";
@@ -71,6 +72,9 @@ class ServiceRoute {
   /// The expected [GeneratedMessage] type this route expects.
   final Type expectedRequestType;
 
+  /// The returned [GeneratedMessage] type.
+  final Type returnedType;
+
   /// The actual method to invoke when this route is called.
   final MethodMirror method;
 
@@ -79,7 +83,11 @@ class ServiceRoute {
 
 
 
-  ServiceRoute(this.service, this.method, this.expectedRequestType, this.filterFunctions);
+  ServiceRoute(this.service, this.method, this.expectedRequestType, this.returnedType, this.filterFunctions);
+
+  /// Returns the generated path for this route. Either to be used as HTTP path
+  /// or as name for sockets.
+  String get path => "/$serviceName.$methodName";
 
   String get serviceName => service.runtimeType.toString();
 
@@ -150,7 +158,7 @@ class ServiceDefinitions {
           throw new InvalidServiceDeclaration("Every route needs to accept a Context and a GeneratedMessage object as parameters.", service);
         }
 
-        var serviceRoute = new ServiceRoute(service, method, method.parameters.last.type.reflectedType, annotation.filters);
+        var serviceRoute = new ServiceRoute(service, method, method.parameters.last.type.reflectedType, returnType.reflectedType, annotation.filters);
         log.fine("Found route ${serviceRoute.methodName} on service ${serviceRoute.serviceName}");
         routes.add(serviceRoute);
       }

@@ -93,10 +93,10 @@ class HttpServiceServer extends ServiceServer {
 
       // Setup the routes
       for (ServiceRoute route in routes) {
-        var routePath = "/${route.serviceName}.${route.methodName}";
-        log.info("- '$routePath' expecting a '${route.expectedRequestType.toString()}' message");
 
-        router.serve(routePath, method: "POST").listen((HttpRequest req) {
+        log.info("- '${route.path}' - expects: '${route.expectedRequestType.toString()}', returns: '${route.returnedType.toString()}'");
+
+        router.serve(route.path, method: "POST").listen((HttpRequest req) {
 
           _handleRequest(req, route);
 
