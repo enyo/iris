@@ -2,5 +2,8 @@ name: remote_services
 description: A complete abstraction of client <-> server communication
 dependencies:
   logging: any
+  annotation_crawler:
+    git: https://github.com/exitlive/annotation_crawler
+  protobuf: any
 dev_dependencies:
   unittest: any

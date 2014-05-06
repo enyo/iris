@@ -1,11 +1,13 @@
-part of remote_service;
+part of remote_services;
 
 
 
 
 /**
- * A class instantiated by the [RemoteServiceServer] whenever a request is made
+ * A class instantiated by the [ServiceServer] whenever a request is made
  * either by HTTP, Socket or Websocket.
+ *
+ * You can access it with [Context.request].
  */
 class RemoteServiceRequest {
 
@@ -21,7 +23,6 @@ class RemoteServiceRequest {
     }
   }
 
-
   final HttpRequest _httpRequest;
 
   RemoteServiceRequest.fromHttp(this._httpRequest);
@@ -31,28 +32,11 @@ class RemoteServiceRequest {
 }
 
 
-/**
- * The base class for context classes.
- */
-class Context {
-
-   final RemoteServiceRequest req;
-
-   Context(this.req);
-}
-
-
 
 /**
- * The base class for the remote_service server.
+ * The base class for servers.
  */
-class RemoteServiceServer<C extends Context> {
-
-  final Function contextInitializer;
-
-  RemoteServiceServer([this.contextInitializer]);
+class ServiceServer {
 
 }
-
-
 
