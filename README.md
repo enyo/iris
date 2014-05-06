@@ -12,41 +12,44 @@ A complete abstraction of client <-> server communication
 
 Define your services:
 
-    Future<bool> authenticationFilter(Context context) {
-      // Make sure the user is authenticated.
-    }
-    
-    @service
-    class UserService extends Service {
-      
-      @Route(filters: [authenticationFilter])
-      Future<CreateUserResponse> create(Context context, CreateUserRequest request) {
-      
-      }
-    
-    }
+```dart
+Future<bool> authenticationFilter(Context context) {
+  // Make sure the user is authenticated.
+}
 
-    RemoteServices getServices() {
-      return new RemoteServices()
-          ..addService(UserService)
-          ..addService(AccountService)
-          ..addServer(new HttpServiceServer())
-          ..addServer(new SocketServiceServer());
-    }
+@service
+class UserService extends Service {
+  
+  @Route(filters: [authenticationFilter])
+  Future<CreateUserResponse> create(Context context, CreateUserRequest request) {
+  
+  }
 
+}
+
+RemoteServices getServices() {
+  return new RemoteServices()
+      ..addService(UserService)
+      ..addService(AccountService)
+      ..addServer(new HttpServiceServer())
+      ..addServer(new SocketServiceServer());
+}
+```
 
 Then in your `/bin/` folder you have a script that calls:
 
-    import "my_services.dart";
+```dart
+import "my_services.dart";
 
-    getServices().start();
-
+getServices().start();
+```
 
 And in you `build.dart` you set the script to generate the client classes:
 
 
-    // TODO
-
+```dart
+// TODO
+```
 
 ### On the client
 
@@ -55,7 +58,9 @@ You import the generated classes from the server, and use the services like this
 
 
 
-    import "package:my_server/services.dart" as remote_services;
-    
-    CreateUserRequest createUserRequest = getMessage();
-    remote_services.userService.create(createUserRequest);
+```dart
+import "package:my_server/services.dart" as remote_services;
+
+CreateUserRequest createUserRequest = getMessage();
+remote_services.userService.create(createUserRequest);
+```
