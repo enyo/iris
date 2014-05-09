@@ -1,4 +1,4 @@
-part of remote_services_compiler;
+part of remote_services_builder;
 
 
 final Pattern _REMOVED_PATTERN = new RegExp(r'--removed=(.*\.dart)$');

@@ -1,4 +1,4 @@
-part of remote_services_compiler;
+part of remote_services_builder;
 
 
 

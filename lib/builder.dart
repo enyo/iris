@@ -1,4 +1,4 @@
-library remote_services_compiler;
+library remote_services_builder;
 
 import "dart:io";
 import "package:logging/logging.dart";
