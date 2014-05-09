@@ -1,4 +1,4 @@
-library browser_client;
+library browser_http_client;
 
 
 import "dart:html";

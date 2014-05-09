@@ -1,4 +1,4 @@
-library server_client;
+library server_http_client;
 
 
 import "dart:io";
