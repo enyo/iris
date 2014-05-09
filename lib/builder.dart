@@ -62,13 +62,21 @@ Future build(ServiceDefinitions serviceDefinitions, String targetDirectory, Stri
 
   if (doBuild) {
 
-    var compiledManifest = new CompiledManifest(targetDirectory, pbMessagesManifest, includePbMessages: includePbMessages, fileName: servicesFileName);
+    var targetDir = new Directory(targetDirectory);
 
-    for (var route in serviceDefinitions.routes) {
-      compiledManifest.getOrCreateService(route.serviceName).routes.add(route);
-    }
+    return targetDir.exists()
+        .then((exists) {
+          if (!exists) return targetDir.create();
+        })
+        .then((_) {
+            var compiledManifest = new CompiledManifest(targetDirectory, pbMessagesManifest, includePbMessages: includePbMessages, fileName: servicesFileName);
 
-    return compiledManifest.compile();
+            for (var route in serviceDefinitions.routes) {
+              compiledManifest.getOrCreateService(route.serviceName).routes.add(route);
+            }
+
+            return compiledManifest.compile();
+        });
 
   }
   else {
