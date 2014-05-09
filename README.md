@@ -43,7 +43,7 @@ import "my_services.dart";
 getServiceDefinitions().startServers();
 ```
 
-And in you `build.dart` you set the script to generate the client classes:
+And in your `build.dart` you set the script to generate the client classes:
 
 
 ```dart
