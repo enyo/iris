@@ -81,10 +81,11 @@ main() {
 
   var services = new Services(client);
 
-  String email = "e@mail.com", password = "password";
+  AuthenticationRequest req = new AuthenticationRequest()
+      ..email = "e@mail.com"
+      ..password = "password";
 
-  services.userService.auth(new AuthenticationRequest()..email=email..password=password)
-      .then((User user) => doSomething(user));
+  services.userService.auth(req).then((User user) => doSomething(user));
 
 }
 ```
