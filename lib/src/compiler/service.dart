@@ -21,14 +21,9 @@ class CompiledService {
   Directory targetDirectory;
 
 
-  /// TODO: turn this into a [File] class.
-  String pbMessagesManifest;
+  String relativePathToPbManifest;
 
-  String get relativePathToPbManifest => pbMessagesManifest;
-
-  CompiledService(this.serviceName, this.targetDirectory, this.pbMessagesManifest);
-
-
+  CompiledService(this.serviceName, this.targetDirectory, this.relativePathToPbManifest);
 
 
 

@@ -1,6 +1,7 @@
 part of remote_services_compiler;
 
 
+
 class CompiledManifest {
 
 
@@ -10,18 +11,27 @@ class CompiledManifest {
 
   String fileName;
 
-  /// TODO: turn this into a [File] class.
-  String pbMessagesManifest;
+  File pbMessagesManifest;
 
-  String get relativePathToPbManifest => pbMessagesManifest;
+  String get relativePathToPbManifest {
+    if (includePbMessages) {
+      return "proto/${getFilename(pbMessagesManifest)}";
+    }
+    else {
+      return getRelativePath(targetDirectory, pbMessagesManifest);
+    }
+  }
 
-  CompiledManifest(this.targetDirectory, this.pbMessagesManifest, {this.fileName});
+  /// Whether the protocol buffer messages should be copied over as well
+  bool includePbMessages;
+
+  CompiledManifest(this.targetDirectory, this.pbMessagesManifest, {this.includePbMessages, this.fileName});
 
 
   CompiledService getOrCreateService(String serviceName) {
     return compiledServices.firstWhere((service) => service.serviceName == serviceName,
         orElse: () {
-          var service = new CompiledService(serviceName, targetDirectory, pbMessagesManifest);
+          var service = new CompiledService(serviceName, targetDirectory, relativePathToPbManifest);
           compiledServices.add(service);
           return service;
         });
@@ -38,6 +48,24 @@ class CompiledManifest {
 
     for (var service in compiledServices) {
       futures.add(service.compile());
+    }
+
+    if (includePbMessages) {
+      // Copy all protocol buffer messages over
+      var protoDir = new Directory("${targetDirectory.path}proto");
+
+      futures.add(protoDir.exists()
+          .then((exists) {
+            if (!exists) {
+              return protoDir.create();
+            }
+          })
+          .then((_) => pbMessagesManifest.parent.list(recursive: false).where((FileSystemEntity file) => file is File && file.path.endsWith(".dart")).toList())
+          .then((List<File> files) {
+            List<Future> copyFutures = files.map((file) => file.copy("${protoDir.path}/${getFilename(file)}")).toList();
+            return Future.wait(copyFutures);
+          })
+      );
     }
 
     return Future.wait(futures);
