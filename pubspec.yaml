@@ -7,5 +7,6 @@ dependencies:
   protobuf: any
   route: any
   barback: any
+  path: any
 dev_dependencies:
   unittest: any

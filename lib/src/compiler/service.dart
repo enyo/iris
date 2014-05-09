@@ -18,7 +18,7 @@ class CompiledService {
 
   List<ServiceRoute> routes = [];
 
-  Directory targetDirectory;
+  String targetDirectory;
 
 
   String relativePathToPbManifest;
@@ -32,7 +32,7 @@ class CompiledService {
    * Compiles the manifest, and writes it to the target directory.
    */
   Future compile() {
-    return new File("${targetDirectory.path}$fileName").writeAsString(compiledString);
+    return new File("${targetDirectory}/$fileName").writeAsString(compiledString);
   }
 
 

@@ -7,18 +7,18 @@ class CompiledManifest {
 
   List<CompiledService> compiledServices = [];
 
-  Directory targetDirectory;
+  String targetDirectory;
 
   String fileName;
 
-  File pbMessagesManifest;
+  String pbMessagesManifest;
 
   String get relativePathToPbManifest {
     if (includePbMessages) {
-      return "proto/${getFilename(pbMessagesManifest)}";
+      return "proto/${path.basename(pbMessagesManifest)}";
     }
     else {
-      return getRelativePath(targetDirectory, pbMessagesManifest);
+      return path.relative(pbMessagesManifest, from: targetDirectory);
     }
   }
 
@@ -44,7 +44,7 @@ class CompiledManifest {
   Future compile() {
     var futures = [];
 
-    futures.add(new File("${targetDirectory.path}$fileName").writeAsString(compiledString));
+    futures.add(new File("${targetDirectory}/$fileName").writeAsString(compiledString));
 
     for (var service in compiledServices) {
       futures.add(service.compile());
@@ -52,7 +52,7 @@ class CompiledManifest {
 
     if (includePbMessages) {
       // Copy all protocol buffer messages over
-      var protoDir = new Directory("${targetDirectory.path}proto");
+      var protoDir = new Directory("${targetDirectory}/proto");
 
       futures.add(protoDir.exists()
           .then((exists) {
@@ -60,9 +60,9 @@ class CompiledManifest {
               return protoDir.create();
             }
           })
-          .then((_) => pbMessagesManifest.parent.list(recursive: false).where((FileSystemEntity file) => file is File && file.path.endsWith(".dart")).toList())
+          .then((_) => new Directory(path.dirname(pbMessagesManifest)).list(recursive: false).where((FileSystemEntity file) => file is File && file.path.endsWith(".dart")).toList())
           .then((List<File> files) {
-            List<Future> copyFutures = files.map((file) => file.copy("${protoDir.path}/${getFilename(file)}")).toList();
+            List<Future> copyFutures = files.map((file) => file.copy("${protoDir.path}/${path.basename(file.path)}")).toList();
             return Future.wait(copyFutures);
           })
       );
