@@ -1,9 +1,8 @@
-library browser;
+library browser_client;
 
 
 import "dart:html";
 import "dart:async";
-import "dart:mirrors";
 
 
 
@@ -66,8 +65,7 @@ class HttpServiceClient extends ServiceClient {
       // Note: file:// URIs have status of 0.
       if (xhr.status >= 200 && xhr.status < 300) {
 
-        var message = reflectClass(expectedResponseType).newInstance(const Symbol("fromBuffer"), [ xhr.response ]).reflectee;
-        completer.complete(message);
+        completer.complete(getMessageFromBytes(expectedResponseType, xhr.response));
 
       } else {
 
