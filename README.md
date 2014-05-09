@@ -4,9 +4,9 @@
 
 A complete abstraction of client <-> server communication.
 
-It basically allows you to "call" functions on your server and get the response
-without having to worry or think about the transport implementation.
-
+It is basically a [remote procedure call](http://en.wikipedia.org/wiki/Remote_procedure_call)
+implementation in dart. You can call the methods on your services and get the
+result back in futures without having to think about the communication.
 
 ## Usage
 
