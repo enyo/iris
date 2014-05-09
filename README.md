@@ -8,6 +8,9 @@ A complete abstraction of client <-> server communication
 ## Usage
 
 
+You can look at the [example repository](https://github.com/enyo/remote_services_example)
+for an implementation.
+
 ### On the server
 
 Define your services:
