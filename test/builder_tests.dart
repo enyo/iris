@@ -11,7 +11,7 @@ main() {
 
   group("Builder", () {
     test("relativePathToPbManifest should depend on includePbMessages", () {
-      var manifest = new CompiledManifest(new Directory("../lib/target"), new File("../lib/orig_proto/messages_manifest.dart"), includePbMessages: false);
+      var manifest = new CompiledManifest("../lib/target", "../lib/orig_proto/messages_manifest.dart", includePbMessages: false);
 
       expect(manifest.relativePathToPbManifest, equals("../orig_proto/messages_manifest.dart"));
       manifest.includePbMessages = true;
