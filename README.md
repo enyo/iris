@@ -2,7 +2,10 @@
 
 [![Build Status](https://drone.io/github.com/enyo/remote-services/status.png)](https://drone.io/github.com/enyo/remote-services/latest)
 
-A complete abstraction of client <-> server communication
+A complete abstraction of client <-> server communication.
+
+It basically allows you to "call" functions on your server and get the response
+without having to worry or think about the transport implementation.
 
 
 ## Usage
