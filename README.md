@@ -51,21 +51,19 @@ import 'package:remote_services/builder.dart' as remote_services;
 import "lib/service_definitions.dart";
 
 
-void main(List<String> args) {
-
-  buildRemoteServices(args);
-
-}
-
 const RS_TARGET = "lib/client_services";
 
 const RS_PROTO_BUFFER_MESSAGES = "lib/proto/messages.dart";
 
 const RS_SERVICES_DIR = "lib/services/";
 
-buildRemoteServices(args) {
+
+void main(List<String> args) {
+
   remote_services.build(getServices(), RS_TARGET, RS_PROTO_BUFFER_MESSAGES, args: args, includePbMessages: true, servicesDirectory: RS_SERVICES_DIR);
+
 }
+
 
 ```
 
