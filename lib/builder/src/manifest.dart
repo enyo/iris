@@ -25,7 +25,9 @@ class CompiledManifest {
   /// Whether the protocol buffer messages should be copied over as well
   bool includePbMessages;
 
-  CompiledManifest(this.targetDirectory, this.pbMessagesManifest, {this.includePbMessages, this.fileName});
+  Type errorCodes;
+
+  CompiledManifest(this.targetDirectory, this.pbMessagesManifest, {this.includePbMessages, this.fileName, this.errorCodes});
 
 
   CompiledService getOrCreateService(String serviceName) {
@@ -41,13 +43,13 @@ class CompiledManifest {
   /**
    * Compiles the manifest and all its services, and writes it to the target directory.
    */
-  Future compile() {
+  Future build() {
     var futures = [];
 
     futures.add(new File("${targetDirectory}/$fileName").writeAsString(compiledString));
 
     for (var service in compiledServices) {
-      futures.add(service.compile());
+      futures.add(service.build());
     }
 
     if (includePbMessages) {
@@ -67,6 +69,11 @@ class CompiledManifest {
           })
       );
     }
+
+    if (errorCodes != null) {
+      futures.add(new CompiledErrorCodes(targetDirectory, errorCodes).build());
+    }
+
 
     return Future.wait(futures);
   }
@@ -88,7 +95,7 @@ class CompiledManifest {
 
     compiledString += """library remote_services_manifest;
 
-import "package:remote_services/client.dart";
+import "package:remote_services/client/client.dart";
 
 """;
 

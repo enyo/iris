@@ -115,6 +115,8 @@ class ServiceDefinitions {
 
   ContextInitializer get contextInitializer => _contextInitializer == null ? _defaultContextInitializer : _contextInitializer;
 
+  RemoteServicesErrorCode errorCodes;
+
   ServiceDefinitions([this._contextInitializer]);
 
   Future<Context> _defaultContextInitializer(ServiceRequest req) => new Future.value(new Context(req));

@@ -1,16 +1,20 @@
 library remote_services_builder;
 
 import "dart:io";
+import "dart:mirrors";
 import "package:logging/logging.dart";
 
 import "package:path/path.dart" as path;
 
 import '../remote/remote_services.dart';
 
+import '../remote/error_code.dart';
+
 part 'src/utils.dart';
 part 'src/manifest.dart';
 part 'src/service.dart';
 part 'src/build_args.dart';
+part 'src/error_codes.dart';
 
 
 /// Added to every generated file.
@@ -21,6 +25,21 @@ String generatedNotice = """///
 
 
 Logger log = new Logger("RemoteServicesBuilder");
+
+
+/**
+ * Thrown when there was a problemen with the services definition.
+ */
+class BuilderException implements Exception {
+
+  String message;
+
+  BuilderException(this.message);
+
+
+  String toString() => "BuilderException: $message";
+
+}
 
 
 /**
@@ -45,10 +64,13 @@ Logger log = new Logger("RemoteServicesBuilder");
  * be copied over to the target directory as well. This is useful if you want
  * to make your remote services public but not the whole server.
  *
+ * Setting [errorCodes] creates a `error_code.dart` file that the client can
+ * import to handle error codes properly.
+ *
  * If [args] are provided, then it will be looked for "--changed" and "--removed"
  * arguments, and the build will only be done dependent on that information.
  */
-Future build(ServiceDefinitions serviceDefinitions, String targetDirectory, String pbMessagesManifest, {bool includePbMessages: false, String servicesFileName: "services.dart", List<String> args, String servicesDirectory}) {
+Future build(ServiceDefinitions serviceDefinitions, String targetDirectory, String pbMessagesManifest, {List<String> args, bool includePbMessages: false, String servicesFileName: "services.dart", String servicesDirectory, Type errorCodes}) {
 
   var doBuild = false;
 
@@ -69,13 +91,13 @@ Future build(ServiceDefinitions serviceDefinitions, String targetDirectory, Stri
           if (!exists) return targetDir.create();
         })
         .then((_) {
-            var compiledManifest = new CompiledManifest(targetDirectory, pbMessagesManifest, includePbMessages: includePbMessages, fileName: servicesFileName);
+            var compiledManifest = new CompiledManifest(targetDirectory, pbMessagesManifest, includePbMessages: includePbMessages, fileName: servicesFileName, errorCodes: errorCodes);
 
             for (var procedure in serviceDefinitions.procedures) {
               compiledManifest.getOrCreateService(procedure.serviceName).procedures.add(procedure);
             }
 
-            return compiledManifest.compile();
+            return compiledManifest.build();
         });
 
   }

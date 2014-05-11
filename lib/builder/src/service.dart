@@ -31,7 +31,7 @@ class CompiledService {
   /**
    * Compiles the manifest, and writes it to the target directory.
    */
-  Future compile() {
+  Future build() {
     return new File("${targetDirectory}/$fileName").writeAsString(compiledString);
   }
 
@@ -43,7 +43,7 @@ class CompiledService {
 library generated_${lowerCaseServiceName};
 
 import "dart:async";
-import "package:remote_services/client.dart";
+import "package:remote_services/client/client.dart";
 import "${relativePathToPbManifest}";
 
 class $serviceName extends Service {
