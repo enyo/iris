@@ -5,12 +5,12 @@ import "package:logging/logging.dart";
 
 import "package:path/path.dart" as path;
 
-import "remote_services.dart";
+import '../remote/remote_services.dart';
 
-part "src/compiler/utils.dart";
-part "src/compiler/manifest.dart";
-part "src/compiler/service.dart";
-part "src/compiler/build_args.dart";
+part 'src/utils.dart';
+part 'src/manifest.dart';
+part 'src/service.dart';
+part 'src/build_args.dart';
 
 
 /// Added to every generated file.

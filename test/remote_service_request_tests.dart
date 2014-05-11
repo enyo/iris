@@ -5,7 +5,7 @@ import "dart:io";
 import "package:unittest/unittest.dart";
 import "package:mock/mock.dart";
 
-import "../lib/remote_services.dart";
+import "../lib/remote/remote_services.dart";
 
 
 main() {

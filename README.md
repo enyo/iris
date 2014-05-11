@@ -49,7 +49,7 @@ And in your `build.dart` you set the script to generate the client classes:
 ```dart
 library build;
 
-import 'package:remote_services/builder.dart' as remote_services;
+import 'package:remote_services/builder/builder.dart' as remote_services;
 
 import "lib/service_definitions.dart";
 
@@ -77,7 +77,7 @@ You import the generated classes from the server, and use the services like this
 
 
 ```dart
-import "package:remote_services/browser_client.dart";
+import "package:remote_services/client/browser_http_client.dart";
 
 main() {
   var client = new HttpServiceClient(Uri.parse("http://localhost:8088"));

@@ -11,7 +11,7 @@ import "package:protobuf/protobuf.dart";
 import "package:logging/logging.dart";
 
 
-import "client.dart";
+import 'src/client.dart';
 
 
 Logger log = new Logger("RemoteServiceClient");

@@ -7,8 +7,8 @@ import "package:mock/mock.dart";
 
 import "package:protobuf/protobuf.dart";
 
-import "../lib/remote_services.dart";
-import "../lib/annotations.dart";
+import "../lib/remote/remote_services.dart";
+import "../lib/remote/annotations.dart";
 
 
 

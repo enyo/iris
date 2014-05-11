@@ -4,7 +4,7 @@ import "dart:io";
 
 import "package:unittest/unittest.dart";
 
-import "../lib/builder.dart";
+import "../lib/builder/builder.dart";
 
 
 main() {
