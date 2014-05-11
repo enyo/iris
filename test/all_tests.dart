@@ -11,8 +11,8 @@ import "integration_tests.dart" as integrationTests;
 
 main() {
 
-  Logger.root.level = Level.FINEST;
-  Logger.root.onRecord.listen((LogRecord record) => print('${record.loggerName} (${record.level}): ${record.message}'));
+//  Logger.root.level = Level.WARNING;
+//  Logger.root.onRecord.listen((LogRecord record) => print('${record.loggerName} (${record.level}): ${record.message}'));
 
   requestTests.main();
   servicesTests.main();
