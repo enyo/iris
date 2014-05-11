@@ -47,11 +47,11 @@ class HttpServiceClient extends ServiceClient {
    *
    * If the Future results in an error you can be sure to get a
    * [ServiceClientException] error.
+   *
+   * You should never invoke this method directly but use [dispatch].
    */
   Future<GeneratedMessage> query(String path, GeneratedMessage requestMessage, Type expectedResponseType) {
     log.finest("Requesting address $path");
-
-    requestMessage.check();
 
     var completer = new Completer();
 
@@ -89,7 +89,7 @@ class HttpServiceClient extends ServiceClient {
       completer.completeError(new ServiceClientException(RemoteServicesErrorCode.RS_COMMUNICATION_ERROR.value, err.toString()));
     });
 
-    xhr.send(requestMessage.writeToBuffer());
+    xhr.send(requestMessage == null ? null : requestMessage.writeToBuffer());
 
     return completer.future;
 

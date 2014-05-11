@@ -68,6 +68,30 @@ class UserService extends remote.Service {
     throw new remote.ProcedureException(ErrorCode.ERROR_CODE_TEST, "Oh noes.");
   }
 
+  @annotation.Procedure()
+  Future<User> noMessage(MyContext context) {
+    return new Future.value(
+        new User()
+            ..id = new Int64(234)
+            ..email = "eee@mail.com"
+            ..name = "test name"
+        );
+  }
+
+  @annotation.Procedure()
+  Future noReturnMessage(MyContext context, UserSearch req) {
+    if (req.name != "no return message") {
+      throw new Exception();
+    }
+    return null;
+  }
+
+
+  @annotation.Procedure()
+  Future noMessages(MyContext context) {
+    return new Future.value();
+  }
+
 
 }
 
@@ -87,13 +111,19 @@ class ClientUserService extends client_lib.Service {
 
   ClientUserService(client_lib.ServiceClient client) : super(client);
 
-  Future<User> search(UserSearch requestMessage) => client.query('/UserService.search', requestMessage, User);
+  Future<User> search(UserSearch requestMessage) => client.dispatch('/UserService.search', requestMessage, User);
 
-  Future<User> unauthorized(UserSearch requestMessage) => client.query('/UserService.unauthorized', requestMessage, User);
+  Future<User> unauthorized(UserSearch requestMessage) => client.dispatch('/UserService.unauthorized', requestMessage, User);
 
-  Future<User> throws(UserSearch requestMessage) => client.query('/UserService.throws', requestMessage, User);
+  Future<User> throws(UserSearch requestMessage) => client.dispatch('/UserService.throws', requestMessage, User);
 
-  Future<User> notAnnotated(UserSearch requestMessage) => client.query('/UserService.notAnnotated', requestMessage, User);
+  Future<User> notAnnotated(UserSearch requestMessage) => client.dispatch('/UserService.notAnnotated', requestMessage, User);
+
+  Future<User> noMessage() => client.dispatch('/UserService.noMessage', null, User, false);
+
+  Future noReturnMessage(UserSearch requestMessage) => client.dispatch('/UserService.noReturnMessage', requestMessage, null);
+
+  Future noMessages() => client.dispatch('/UserService.noMessages', null, null, false);
 
 }
 
@@ -155,6 +185,31 @@ main() {
             expect(excp.errorCode, equals(ErrorCode.ERROR_CODE_TEST.value));
             expect(excp.internalMessage, equals("Oh noes."));
           });
+
+      expect(future, completes);
+    });
+    test("procedures can accept requests without pb messages", () {
+      var future = clientUserService.noMessage()
+          .then((User user) {
+            expect(user.email, equals("eee@mail.com"));
+            expect(user.name, equals("test name"));
+          });
+
+      expect(future, completes);
+    });
+    test("procedures can not return pb messages", () {
+      var future = clientUserService.noReturnMessage(new UserSearch()..name = "no return message")
+          .then((_) {
+            expect(_, isNull);
+          });
+
+      expect(future, completes);
+    });
+    test("procedures can not require any pb messages", () {
+      var future = clientUserService.noMessages()
+          .then((_) {
+        expect(_, isNull);
+      });
 
       expect(future, completes);
     });

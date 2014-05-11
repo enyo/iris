@@ -38,6 +38,8 @@ abstract class RemoteServicesErrorCode {
   /// When the client received an invalid protocol buffer message
   static const RS_INVALID_PB_MESSAGE_RECEIVED_BY_CLIENT = const _InternalErrorCode._(911);
 
+  /// When a required protocol buffer message was either not sent or received
+  static const RS_REQUIRED_PB_MESSAGE_NOT_PROVIDED = const _InternalErrorCode._(912);
 
 
   /// When a filter rejected the request

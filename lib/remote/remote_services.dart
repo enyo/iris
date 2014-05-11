@@ -74,7 +74,7 @@ class ServiceProcedure {
   final Type expectedRequestType;
 
   /// The returned [GeneratedMessage] type.
-  final Type returnedType;
+  final Type responseType;
 
   /// The actual method to invoke when this procedure is called.
   final MethodMirror method;
@@ -84,7 +84,7 @@ class ServiceProcedure {
 
 
 
-  ServiceProcedure(this.service, this.method, this.expectedRequestType, this.returnedType, this.filterFunctions);
+  ServiceProcedure(this.service, this.method, this.expectedRequestType, this.responseType, this.filterFunctions);
 
   /// Returns the generated path for this procedure. Either to be used as HTTP path
   /// or as name for sockets.
@@ -99,7 +99,9 @@ class ServiceProcedure {
    * resulting [GeneratedMessage].
    */
   Future<GeneratedMessage> invoke(Context context, GeneratedMessage requestMessage) {
-    return reflect(service).invoke(method.simpleName, [context, requestMessage]).reflectee;
+    List params = [context];
+    if (expectedRequestType != null) params.add(requestMessage);
+    return reflect(service).invoke(method.simpleName, params).reflectee;
   }
 
 }
@@ -146,22 +148,34 @@ class ServiceDefinitions {
         /// Now check that the method is actually of type [ProcedureMethod].
         /// See: http://stackoverflow.com/questions/23497032/how-do-check-if-a-methodmirror-implements-a-typedef
 
-        TypeMirror returnType = method.returnType.typeArguments.first;
+        TypeMirror returnTypeMirror = method.returnType.typeArguments.first;
+        Type returnType;
 
-        // Using `.isSubtypeOf` here doesn't work because Future has Generics.
-        if (method.returnType.qualifiedName != const Symbol("dart.async.Future") ||
-            !returnType.isSubtypeOf(reflectClass(GeneratedMessage))) {
-          throw new InvalidServiceDeclaration._("Every procedure needs to return a Future containing a GeneratedMessage.", service);
+        if (returnTypeMirror is! ClassMirror && returnTypeMirror.reflectedType == dynamic) {
+          returnType = null;
+        }
+        else {
+          // Using `.isSubtypeOf` here doesn't work because Future has Generics.
+          if (method.returnType.qualifiedName != const Symbol("dart.async.Future") ||
+              returnTypeMirror is! ClassMirror ||
+              !returnTypeMirror.isSubtypeOf(reflectClass(GeneratedMessage))) {
+            throw new InvalidServiceDeclaration._("Every procedure needs to return a Future containing a GeneratedMessage.", service);
+          }
+          else {
+            returnType = returnTypeMirror.reflectedType;
+          }
         }
 
 
-        if (method.parameters.length != 2 ||
+        if (method.parameters.length < 1 || method.parameters.length > 2 ||
             !method.parameters.first.type.isSubtypeOf(reflectClass(Context)) ||
-            !method.parameters.last.type.isSubtypeOf(reflectClass(GeneratedMessage))) {
+            (method.parameters.length == 2 && !method.parameters.last.type.isSubtypeOf(reflectClass(GeneratedMessage)))) {
           throw new InvalidServiceDeclaration._("Every procedure needs to accept a Context and a GeneratedMessage object as parameters.", service);
         }
 
-        var serviceProcedure = new ServiceProcedure(service, method, method.parameters.last.type.reflectedType, returnType.reflectedType, annotation.filters);
+        var requestType = method.parameters.length == 2 ? method.parameters.last.type.reflectedType : null;
+
+        var serviceProcedure = new ServiceProcedure(service, method, requestType, returnType, annotation.filters);
         log.fine("Found procedure ${serviceProcedure.methodName} on service ${serviceProcedure.serviceName}");
         procedures.add(serviceProcedure);
       }

@@ -53,7 +53,7 @@ class $serviceName extends Service {
 """;
 
     for (var procedure in procedures) {
-      compiledString += "  Future<${procedure.returnedType}> ${procedure.methodName}(${procedure.expectedRequestType} requestMessage) => client.query('${procedure.path}', requestMessage, ${procedure.returnedType.toString()});\n\n";
+      compiledString += "  Future${procedure.responseType == null ? "" : "<${procedure.responseType}>"} ${procedure.methodName}(${procedure.expectedRequestType == null ? "" : procedure.expectedRequestType.toString() + " requestMessage"}) => client.dispatch('${procedure.path}', ${procedure.expectedRequestType == null ? "null" : "requestMessage"}, ${procedure.responseType.toString()}, ${procedure.expectedRequestType == null ? 'false' : 'true'});\n\n";
     }
 
     compiledString += "}\n\n";

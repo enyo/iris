@@ -104,7 +104,7 @@ class HttpServiceServer extends ServiceServer {
       // Setup the procedures
       for (ServiceProcedure procedure in procedures) {
 
-        log.info("- '${procedure.path}' - expects: '${procedure.expectedRequestType.toString()}', returns: '${procedure.returnedType.toString()}'");
+        log.info("- '${procedure.path}' - expects: '${procedure.expectedRequestType.toString()}', returns: '${procedure.responseType.toString()}'");
 
         router.serve(procedure.path, method: "POST").listen((HttpRequest req) {
 
@@ -126,13 +126,20 @@ class HttpServiceServer extends ServiceServer {
 
     var serviceRequest = new ServiceRequest.fromHttp(req);
 
-    // First get the protocol buffer from the request
-    return req.fold(new BytesBuilder(), (builder, bytes) => builder..add(bytes))
-        .then((BytesBuilder builder) {
-          requestMessage = _getMessageFromBytes(procedure, builder.takeBytes());
+    Future reqMsgFuture;
 
-          return contextInitializer(serviceRequest);
-        })
+    if (procedure.expectedRequestType == null) {
+      reqMsgFuture = new Future.value();
+    }
+    else {
+      reqMsgFuture = req.fold(new BytesBuilder(), (builder, bytes) => builder..add(bytes))
+          .then((BytesBuilder builder) {
+            requestMessage = _getMessageFromBytes(procedure, builder.takeBytes());
+          });
+    }
+
+    // First get the protocol buffer from the request
+    return reqMsgFuture.then((_) => contextInitializer(serviceRequest))
         .then((Context ctx) {
           context = ctx;
 
@@ -152,11 +159,11 @@ class HttpServiceServer extends ServiceServer {
         // Invoke the procedure
         .then((_) => procedure.invoke(context, requestMessage))
         // And send the response
-        .then((GeneratedMessage responseMessage) => _send(req, responseMessage.writeToBuffer()))
+        .then((GeneratedMessage responseMessage) => _send(req, procedure.responseType == null ? [] : responseMessage.writeToBuffer()))
         .catchError((err) {
 
           RemoteServicesErrorCode errorCode = RemoteServicesErrorCode.RS_INTERNAL_SERVER_ERROR;
-          String errorMessage = "ERROR $err";
+          String errorMessage = err.toString();
 
           if (err is _ErrorCodeException || err is ProcedureException) {
             errorCode = err.errorCode;

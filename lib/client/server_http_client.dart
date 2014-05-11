@@ -44,10 +44,10 @@ class HttpServiceClient extends ServiceClient {
   /**
    * If the Future results in an error you can be sure to get a
    * [ServiceClientException] error.
+   *
+   * You should never invoke this method directly but use [dispatch].
    */
   Future<GeneratedMessage> query(String path, GeneratedMessage requestMessage, Type expectedResponseType) {
-
-    requestMessage.check();
 
     HttpClient client = new HttpClient();
 
