@@ -5,8 +5,7 @@ version: 0.1.0
 homepage: https://github.com/enyo/remote-services
 dependencies:
   logging: any
-  annotation_crawler:
-    git: https://github.com/exitlive/annotation_crawler
+  annotation_crawler: any
   protobuf: any
   route: any
   barback: any
