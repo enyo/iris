@@ -21,7 +21,7 @@ Define your services:
 ```dart
 class UserService extends Service {
   
-  @Route()
+  @Procedure()
   Future<CreateUserResponse> create(Context context, CreateUserRequest request) {
   
   }
@@ -99,7 +99,7 @@ main() {
 
 ### Context initializers
 
-Every *route* and *route filter* receives a `Context` object that gets
+Every *procedure* and *procedure filter* receives a `Context` object that gets
 instantiated for every request. If you don't define a `ContextInitializer`
 yourself, you will always receive the default `Context` implementation, which
 only holds the `ServiceRequest` object.
@@ -109,7 +109,7 @@ you can define your own context class and provide a `ContextInitializer` to
 create that object for you.
 
 > `ContextInitializers` are the first thing called when a request comes in.
-> After that all filters are called sequentially, and then your route with
+> After that all filters are called sequentially, and then your procedure with
 > the initialized `Context`.
 
 This is the `typedef` for `ContextInitializer`s:
@@ -163,9 +163,9 @@ So, every time you receive a `Context` object, it is now a `MyContext` instance.
 
 ### Filters
 
-Often you need your routes to be filtered, for example if you need authentication.
+Often you need your procedures to be filtered, for example if you need authentication.
 
-Filters are defined with the `Route` annotation and this is their `typedef`:
+Filters are defined with the `Procedure` annotation and this is their `typedef`:
 
 ```dart
 typedef Future<bool> FilterFunction(Context context);
@@ -182,7 +182,7 @@ Future<bool> authenticationFilter(Context context) {
 
 class UserService extends Service {
   
-  @Route(filters: const[authenticationFilter])
+  @Procedure(filters: const[authenticationFilter])
   Future<CreateUserResponse> create(Context context, CreateUserRequest request) {
   
   }
@@ -190,7 +190,7 @@ class UserService extends Service {
 }
 ```
 
-If a filter returns `false`, the route will *not* be called, and the an error
+If a filter returns `false`, the procedure will *not* be called, and the an error
 will be sent to the client.
 
 > After the `ContextInitializer` function, all defined filters will be called

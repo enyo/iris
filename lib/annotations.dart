@@ -3,17 +3,17 @@ library annotations;
 import "remote_services.dart";
 
 /**
- * Use this annotation on methods in a [Service] class to tell [RemoteServices]
- * that the method is a route.
+ * Use this annotation on methods in a [Service] class to tell [ServiceDefinitions]
+ * that the method is a procedure.
  *
- * All methods having this annotation must implement the [RouteMethod] typedef.
+ * All methods having this annotation must implement the [ProcedureMethod] typedef.
  */
-class Route {
+class Procedure {
 
   final List<FilterFunction> filters;
 
 
-  const Route({this.filters: const []});
+  const Procedure({this.filters: const []});
 
 }
 

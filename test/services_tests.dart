@@ -23,7 +23,7 @@ class TestServer extends Mock implements ServiceServer {
 
 class TestService extends Service {
 
-  @Route()
+  @Procedure()
   Future<TestResponse> create(Context context, TestRequest req) {
     return null;
   }
@@ -33,7 +33,7 @@ class TestService extends Service {
 
 class NoGeneratedMessageRouteService extends Service {
 
-  @Route()
+  @Procedure()
   Future<String> create(Context context, TestRequest req) => null;
 
 }
@@ -41,7 +41,7 @@ class NoGeneratedMessageRouteService extends Service {
 
 class WrongParamsRouteService extends Service {
 
-  @Route()
+  @Procedure()
   Future<TestResponse> create(TestRequest req, Context context) => null;
 
 }
@@ -63,10 +63,10 @@ main() {
       expect(() => services.addService(new WrongParamsRouteService()), throws);
     });
 
-    test("addService() properly detects all routes", () {
+    test("addService() properly detects all procedures", () {
       var services = new ServiceDefinitions();
       services.addService(new TestService());
-      services.routes.first.invoke(new TestContext(), new TestRequest());
+      services.procedures.first.invoke(new TestContext(), new TestRequest());
     });
 
     test("addService() throws if a server has already been set", () {
@@ -76,7 +76,7 @@ main() {
       expect(() => services.addService(new TestService()), throws);
     });
 
-    test("addServer() throws if no route has been added yet", (){
+    test("addServer() throws if no procedure has been added yet", (){
       var services = new ServiceDefinitions();
       expect(() => services.addServer(new TestServer()), throws);
     });

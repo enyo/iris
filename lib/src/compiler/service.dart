@@ -16,7 +16,7 @@ class CompiledService {
 
   String get lowerCaseServiceName => _lcFirst(serviceName);
 
-  List<ServiceRoute> routes = [];
+  List<ServiceProcedure> procedures = [];
 
   String targetDirectory;
 
@@ -52,8 +52,8 @@ class $serviceName extends Service {
 
 """;
 
-    for (var route in routes) {
-      compiledString += "  Future<${route.returnedType}> ${route.methodName}(${route.expectedRequestType} requestMessage) => client.query('${route.path}', requestMessage, ${route.returnedType.toString()});\n\n";
+    for (var procedure in procedures) {
+      compiledString += "  Future<${procedure.returnedType}> ${procedure.methodName}(${procedure.expectedRequestType} requestMessage) => client.query('${procedure.path}', requestMessage, ${procedure.returnedType.toString()});\n\n";
     }
 
     compiledString += "}\n\n";

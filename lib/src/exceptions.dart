@@ -39,7 +39,7 @@ class FilterException extends RemoteServicesException {
 
 /**
  * Thrown whenever you call [RemoteServices.addService] with a [Service] that
- * contains invalid routes.
+ * contains invalid procedures.
  */
 class InvalidServiceDeclaration extends RemoteServicesException {
 
@@ -73,9 +73,9 @@ class _ErrorCodeException extends RemoteServicesException {
 
 
 /**
- * Throw this in your routes when you want to send an error code to the client.
+ * Throw this in your procedures when you want to send an error code to the client.
  */
-class RouteException extends RemoteServicesException {
+class ProcedureException extends RemoteServicesException {
 
   final RemoteServicesErrorCode errorCode;
 
@@ -85,7 +85,7 @@ class RouteException extends RemoteServicesException {
    *
    * Beware that his could potentially leak information if sent to a browser!
    */
-  RouteException(this.errorCode, [message]) : super._(message);
+  ProcedureException(this.errorCode, [message]) : super._(message);
 
 }
 

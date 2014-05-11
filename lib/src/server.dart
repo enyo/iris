@@ -38,9 +38,9 @@ class ServiceRequest {
  */
 abstract class ServiceServer {
 
-  List<ServiceRoute> _routes;
+  List<ServiceProcedure> _procedures;
 
-  List<ServiceRoute> get routes => _routes;
+  List<ServiceProcedure> get procedures => _procedures;
 
   ContextInitializer _contextInitializer;
 
@@ -52,9 +52,9 @@ abstract class ServiceServer {
 
 
 
-  GeneratedMessage _getMessageFromBytes(ServiceRoute route, List<int> bytes) {
+  GeneratedMessage _getMessageFromBytes(ServiceProcedure procedure, List<int> bytes) {
     try {
-      GeneratedMessage message = reflectClass(route.expectedRequestType).newInstance(const Symbol("fromBuffer"), [bytes]).reflectee;
+      GeneratedMessage message = reflectClass(procedure.expectedRequestType).newInstance(const Symbol("fromBuffer"), [bytes]).reflectee;
       message.check();
       return message;
     }
@@ -68,7 +68,7 @@ abstract class ServiceServer {
 
 
 /**
- * The HttpServiceServer exposes all routes via Http.
+ * The HttpServiceServer exposes all procedures via Http.
  */
 class HttpServiceServer extends ServiceServer {
 
@@ -85,7 +85,7 @@ class HttpServiceServer extends ServiceServer {
 
   /**
    * Starts an HTTP server that listens for POST requests for all specified
-   * routes and always returns the expected [GeneratedMessage].
+   * procedures and always returns the expected [GeneratedMessage].
    *
    * When an error error occurs, a statusCode between 400 and 599 will be sent,
    * and a [ErrorMessage] along with it.
@@ -96,14 +96,14 @@ class HttpServiceServer extends ServiceServer {
 
       var router = new Router(server);
 
-      // Setup the routes
-      for (ServiceRoute route in routes) {
+      // Setup the procedures
+      for (ServiceProcedure procedure in procedures) {
 
-        log.info("- '${route.path}' - expects: '${route.expectedRequestType.toString()}', returns: '${route.returnedType.toString()}'");
+        log.info("- '${procedure.path}' - expects: '${procedure.expectedRequestType.toString()}', returns: '${procedure.returnedType.toString()}'");
 
-        router.serve(route.path, method: "POST").listen((HttpRequest req) {
+        router.serve(procedure.path, method: "POST").listen((HttpRequest req) {
 
-          _handleRequest(req, route);
+          _handleRequest(req, procedure);
 
         });
       }
@@ -113,7 +113,7 @@ class HttpServiceServer extends ServiceServer {
   }
 
 
-  Future _handleRequest(HttpRequest req, ServiceRoute route) {
+  Future _handleRequest(HttpRequest req, ServiceProcedure procedure) {
 
     GeneratedMessage requestMessage;
     Context context;
@@ -123,7 +123,7 @@ class HttpServiceServer extends ServiceServer {
     // First get the protocol buffer from the request
     return req.fold(new BytesBuilder(), (builder, bytes) => builder..add(bytes))
         .then((BytesBuilder builder) {
-          requestMessage = _getMessageFromBytes(route, builder.takeBytes());
+          requestMessage = _getMessageFromBytes(procedure, builder.takeBytes());
 
           return contextInitializer(serviceRequest);
         })
@@ -133,7 +133,7 @@ class HttpServiceServer extends ServiceServer {
           var future = new Future.value();
 
           // Call all filters in sequence
-          for (var filter in route.filterFunctions) {
+          for (var filter in procedure.filterFunctions) {
             future = future
                 .then((_) => filter(context))
                 .then((bool filterResult) {
@@ -143,19 +143,16 @@ class HttpServiceServer extends ServiceServer {
 
           return future;
         })
-        // Invoke the route
-        .then((_) => route.invoke(context, requestMessage))
+        // Invoke the procedure
+        .then((_) => procedure.invoke(context, requestMessage))
         // And send the response
         .then((GeneratedMessage responseMessage) => _send(req, responseMessage.writeToBuffer()))
         .catchError((err) {
 
-          // TODO FIXME: build the ErrorMessage protocol buffer message
-          // Check if err is a RouteError and build the pb message accordingly
-
           RemoteServicesErrorCode errorCode = RemoteServicesErrorCode.RS_INTERNAL_SERVER_ERROR;
           String errorMessage = "ERROR $err";
 
-          if (err is _ErrorCodeException) {
+          if (err is _ErrorCodeException || err is ProcedureException) {
             errorCode = err.errorCode;
             errorMessage = err.message;
           }
@@ -170,7 +167,7 @@ class HttpServiceServer extends ServiceServer {
   }
 
   serveNotFound(HttpRequest req) {
-    log.finest("Sending 404 for route: ${req.uri.path}");
+    log.finest("Sending 404 for procedure: ${req.uri.path}");
 
     _send(req, UTF8.encode("Not found."), RemoteServicesErrorCode.RS_PROCEDURE_NOT_FOUND);
 

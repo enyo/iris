@@ -71,8 +71,8 @@ Future build(ServiceDefinitions serviceDefinitions, String targetDirectory, Stri
         .then((_) {
             var compiledManifest = new CompiledManifest(targetDirectory, pbMessagesManifest, includePbMessages: includePbMessages, fileName: servicesFileName);
 
-            for (var route in serviceDefinitions.routes) {
-              compiledManifest.getOrCreateService(route.serviceName).routes.add(route);
+            for (var procedure in serviceDefinitions.procedures) {
+              compiledManifest.getOrCreateService(procedure.serviceName).procedures.add(procedure);
             }
 
             return compiledManifest.compile();
