@@ -1,5 +1,8 @@
 name: remote_services
 description: A complete abstraction of client <-> server communication
+author: Matias Meno
+version: 0.1.0
+homepage: https://github.com/enyo/remote-services
 dependencies:
   logging: any
   annotation_crawler:
