@@ -1,6 +1,5 @@
-library builder_tests;
+library integration_tests;
 
-import "dart:io";
 import "dart:async";
 import 'package:fixnum/fixnum.dart';
 
@@ -64,9 +63,12 @@ class UserService extends remote.Service {
     throw new remote.ProcedureException(ErrorCode.ERROR_CODE_TEST, "Oh noes.");
   }
 
-  Future<User> notAnnotated(MyContext context, UserSearch req) {
-    throw new remote.ProcedureException(ErrorCode.ERROR_CODE_TEST, "Oh noes.");
+  @annotation.Procedure()
+  Future throwsRandomException(MyContext context) {
+    throw new Exception("Oups, something went through.");
   }
+
+  Future<User> notAnnotated(MyContext context, UserSearch req) => null;
 
   @annotation.Procedure()
   Future<User> noMessage(MyContext context) {
@@ -116,6 +118,8 @@ class ClientUserService extends client_lib.Service {
   Future<User> unauthorized(UserSearch requestMessage) => client.dispatch('/UserService.unauthorized', requestMessage, User);
 
   Future<User> throws(UserSearch requestMessage) => client.dispatch('/UserService.throws', requestMessage, User);
+
+  Future throwsRandomException() => client.dispatch('/UserService.throwsRandomException', null, User, false);
 
   Future<User> notAnnotated(UserSearch requestMessage) => client.dispatch('/UserService.notAnnotated', requestMessage, User);
 
@@ -184,6 +188,16 @@ main() {
           .catchError((client_lib.ServiceClientException excp) {
             expect(excp.errorCode, equals(ErrorCode.ERROR_CODE_TEST.value));
             expect(excp.internalMessage, equals("Oh noes."));
+          });
+
+      expect(future, completes);
+    });
+    test("random exceptions get sanitized properly", () {
+      var future = clientUserService.throwsRandomException()
+          .then((_) => fail("Shouldn't be reached"))
+          .catchError((client_lib.ServiceClientException excp) {
+            expect(excp.errorCode, equals(RemoteServicesErrorCode.RS_INTERNAL_SERVER_ERROR.value));
+            expect(excp.internalMessage, equals("Exception: Oups, something went through."));
           });
 
       expect(future, completes);

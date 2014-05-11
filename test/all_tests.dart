@@ -6,6 +6,7 @@ import "services_tests.dart" as servicesTests;
 import "server_tests.dart" as serverTests;
 import "builder_tests.dart" as builderTests;
 import "filter_tests.dart" as filterTests;
+import "integration_tests.dart" as integrationTests;
 
 
 main() {
@@ -18,5 +19,6 @@ main() {
   serverTests.main();
   builderTests.main();
   filterTests.main();
+  integrationTests.main();
 
 }
