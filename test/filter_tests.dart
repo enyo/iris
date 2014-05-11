@@ -1,4 +1,4 @@
-library filter_tests;
+library integration_tests;
 
 import "dart:io";
 
@@ -15,8 +15,6 @@ import "../lib/remote/annotations.dart";
 Future<bool> authFilter(Context context) {
   return new Future.value(true);
 }
-
-
 
 
 main() {

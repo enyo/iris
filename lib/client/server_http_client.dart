@@ -12,6 +12,8 @@ import "package:logging/logging.dart";
 
 
 import 'client.dart';
+import '../remote/error_code.dart';
+import '../src/consts.dart';
 
 
 Logger log = new Logger("RemoteServiceClient");
@@ -39,7 +41,13 @@ class HttpServiceClient extends ServiceClient {
   }
 
 
+  /**
+   * If the Future results in an error you can be sure to get a
+   * [ServiceClientException] error.
+   */
   Future<GeneratedMessage> query(String path, GeneratedMessage requestMessage, Type expectedResponseType) {
+
+    requestMessage.check();
 
     HttpClient client = new HttpClient();
 
@@ -71,16 +79,33 @@ class HttpServiceClient extends ServiceClient {
         // TODO: optimise by copying to a fixed size array with setRange
         List<int> bytes = bytesCollection.expand((x) => x).toList(growable: false);
 
-        if (response.statusCode < 200 || response.statusCode >= 400) {
-          log.warning("Response from server: ${UTF8.decode(bytes)}");
-          throw new Exception("Response was not 200 but ${response.statusCode} so trying to parse error response");
+        if (response.statusCode < 200 || response.statusCode >= 400 || response.headers[ERROR_CODE_RESPONSE_HEADER] != null) {
+          log.warning("Response with status code ${response.statusCode} from server: ${UTF8.decode(bytes)}");
+
+          int errorCode = RemoteServicesErrorCode.RS_COMMUNICATION_ERROR.value;
+          String message = "";
+
+          try {
+            message = UTF8.decode(bytes);
+          }
+          catch (e) { }
+
+          if (response.headers[ERROR_CODE_RESPONSE_HEADER] != null) {
+            errorCode = int.parse(response.headers[ERROR_CODE_RESPONSE_HEADER].first);
+          }
+
+          throw new ServiceClientException(errorCode, message);
         }
 
         return getMessageFromBytes(expectedResponseType, bytes);
       })
       .catchError((error) {
-        // TODO FIXME convert to RemoteServiceError
-        throw error;
+        if (error is ServiceClientException) {
+          // Has already been handled
+          throw error;
+        } else {
+          throw new ServiceClientException(RemoteServicesErrorCode.RS_COMMUNICATION_ERROR.value, error.toString());
+        }
       });
 
   }

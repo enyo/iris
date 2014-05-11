@@ -10,3 +10,5 @@ dependencies:
   path: any
 dev_dependencies:
   unittest: any
+  exitlive_protobuf_builder:
+    git: git@github.com:exitlive/exitlive-protobuf-builder.git

@@ -35,14 +35,10 @@ class CompiledErrorCodes {
 
 class ErrorCode {
 
-  final int value;
-
-  const ErrorCode._(this.value);
-
 """;
 
     codes.forEach((String name, int code) {
-      compiledString += "  static const $name = const ErrorCode._($code);\n\n";
+      compiledString += "  static const $name = $code;\n\n";
     });
 
     compiledString += """

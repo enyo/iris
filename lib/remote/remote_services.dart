@@ -17,7 +17,7 @@ import "annotations.dart" as annotations;
 import "package:annotation_crawler/annotation_crawler.dart" as annotation_crawler;
 
 import "error_code.dart";
-
+import "../src/consts.dart";
 
 part "src/exceptions.dart";
 part "src/server.dart";
@@ -186,6 +186,14 @@ class ServiceDefinitions {
    */
   Future startServers() {
     return Future.wait(servers.map((server) => server.start()));
+  }
+
+
+  /**
+   * Stops all servers
+   */
+  Future stopServers() {
+    return Future.wait(servers.map((server) => server.stop()));
   }
 
 

@@ -2,7 +2,27 @@ library client;
 
 import "dart:mirrors";
 import "dart:async";
+
 import "package:protobuf/protobuf.dart";
+
+/**
+ * Whenever an error occurs, this is the exception you get out of it.
+ */
+class ServiceClientException implements Exception {
+
+  /// The error code received by the server.
+  final int errorCode;
+
+  /// An optional message **used for development only**! Do not show this to the
+  /// user
+  final String internalMessage;
+
+  ServiceClientException(this.errorCode, [this.internalMessage]);
+
+
+  String toString() => "ServiceClientException with error code ${errorCode}." + internalMessage == null ? "" : " Error: " + internalMessage;
+
+}
 
 
 /**

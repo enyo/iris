@@ -11,7 +11,8 @@ import "package:logging/logging.dart";
 
 
 import 'client.dart';
-
+import '../remote/error_code.dart';
+import '../src/consts.dart';
 
 Logger log = new Logger("RemoteServiceClient");
 
@@ -43,9 +44,14 @@ class HttpServiceClient extends ServiceClient {
   /**
    * This method communicates with the backend server through HTTP requests, and
    * handling the responses.
+   *
+   * If the Future results in an error you can be sure to get a
+   * [ServiceClientException] error.
    */
   Future<GeneratedMessage> query(String path, GeneratedMessage requestMessage, Type expectedResponseType) {
     log.finest("Requesting address $path");
+
+    requestMessage.check();
 
     var completer = new Completer();
 
@@ -63,20 +69,24 @@ class HttpServiceClient extends ServiceClient {
 
     xhr.onLoad.listen((e) {
       // Note: file:// URIs have status of 0.
-      if (xhr.status >= 200 && xhr.status < 300) {
+      if (xhr.status >= 200 && xhr.status < 300 && !xhr.responseHeaders.containsKey(ERROR_CODE_RESPONSE_HEADER)) {
 
         completer.complete(getMessageFromBytes(expectedResponseType, xhr.response));
 
       } else {
+        int errorCode = RemoteServicesErrorCode.RS_COMMUNICATION_ERROR.value;
+        String message = xhr.response;
 
-        // TODO return ErrorMessage
+        if (xhr.responseHeaders.containsKey(ERROR_CODE_RESPONSE_HEADER)) {
+          errorCode = xhr.responseHeaders[ERROR_CODE_RESPONSE_HEADER];
+        }
 
+        completer.completeError(new ServiceClientException(RemoteServicesErrorCode.RS_COMMUNICATION_ERROR, message));
       }
     });
 
     xhr.onError.listen((err) {
-      //    completer.completeError(new messages.Error()
-      //      ..code = error_codes.COMMUNICATION_ERROR);
+      completer.completeError(new ServiceClientException(RemoteServicesErrorCode.RS_COMMUNICATION_ERROR.value, err.toString()));
     });
 
     xhr.send(requestMessage.writeToBuffer());

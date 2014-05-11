@@ -49,7 +49,7 @@ abstract class ServiceServer {
 
   void start();
 
-
+  void stop();
 
 
   GeneratedMessage _getMessageFromBytes(ServiceProcedure procedure, List<int> bytes) {
@@ -81,6 +81,9 @@ class HttpServiceServer extends ServiceServer {
   /// E.g.: "http://localhost:9000"
   final String allowOrigin;
 
+  HttpServer _server;
+
+
   HttpServiceServer(this.address, this.port, {this.allowOrigin});
 
   /**
@@ -92,6 +95,8 @@ class HttpServiceServer extends ServiceServer {
    */
   Future start() {
     return HttpServer.bind(address, port).then((server) {
+      _server = server;
+
       log.info("Listening on $address, port $port.");
 
       var router = new Router(server);
@@ -112,6 +117,7 @@ class HttpServiceServer extends ServiceServer {
     });
   }
 
+  Future stop() => _server == null ? new Future.value() : _server.close();
 
   Future _handleRequest(HttpRequest req, ServiceProcedure procedure) {
 
@@ -169,7 +175,7 @@ class HttpServiceServer extends ServiceServer {
   serveNotFound(HttpRequest req) {
     log.finest("Sending 404 for procedure: ${req.uri.path}");
 
-    _send(req, UTF8.encode("Not found."), RemoteServicesErrorCode.RS_PROCEDURE_NOT_FOUND);
+    _send(req, UTF8.encode("The requested procedure was not found."), RemoteServicesErrorCode.RS_PROCEDURE_NOT_FOUND);
 
     return req.response.close();
   }
@@ -192,7 +198,7 @@ class HttpServiceServer extends ServiceServer {
       else {
         statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
       }
-      req.response.headers.add("X-Error-Code", errorCode.value);
+      req.response.headers.add(ERROR_CODE_RESPONSE_HEADER, errorCode.value);
     }
 
     req.response.statusCode = statusCode;
