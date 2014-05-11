@@ -53,9 +53,14 @@ abstract class ServiceServer {
 
 
   GeneratedMessage _getMessageFromBytes(ServiceRoute route, List<int> bytes) {
-    var message = reflectClass(route.expectedRequestType).newInstance(const Symbol("fromBuffer"), [bytes]).reflectee;
-    message.check();
-    return message;
+    try {
+      GeneratedMessage message = reflectClass(route.expectedRequestType).newInstance(const Symbol("fromBuffer"), [bytes]).reflectee;
+      message.check();
+      return message;
+    }
+    catch (err) {
+      throw new _ErrorCodeException(RemoteServicesErrorCode.RS_INVALID_PB_MESSAGE_RECEIVED_BY_SERVICE, err.toString());
+    }
   }
 
 }
@@ -141,13 +146,25 @@ class HttpServiceServer extends ServiceServer {
         // Invoke the route
         .then((_) => route.invoke(context, requestMessage))
         // And send the response
-        .then((GeneratedMessage responseMessage) => _send(req, responseMessage.writeToBuffer(), HttpStatus.OK))
+        .then((GeneratedMessage responseMessage) => _send(req, responseMessage.writeToBuffer()))
         .catchError((err) {
 
           // TODO FIXME: build the ErrorMessage protocol buffer message
           // Check if err is a RouteError and build the pb message accordingly
 
-          _send(req, UTF8.encode("ERROR $err"), HttpStatus.INTERNAL_SERVER_ERROR);
+          RemoteServicesErrorCode errorCode = RemoteServicesErrorCode.RS_INTERNAL_SERVER_ERROR;
+          String errorMessage = "ERROR $err";
+
+          if (err is _ErrorCodeException) {
+            errorCode = err.errorCode;
+            errorMessage = err.message;
+          }
+          else if (err is FilterException) {
+            errorCode = RemoteServicesErrorCode.RS_REJECTED_BY_FILTER;
+            errorMessage = "The filter '${err.filterName}' rejected the request.";
+          }
+
+          _send(req, UTF8.encode(errorMessage), errorCode);
 
         });
   }
@@ -155,18 +172,30 @@ class HttpServiceServer extends ServiceServer {
   serveNotFound(HttpRequest req) {
     log.finest("Sending 404 for route: ${req.uri.path}");
 
-    _send(req, UTF8.encode("Not found."), HttpStatus.NOT_FOUND);
+    _send(req, UTF8.encode("Not found."), RemoteServicesErrorCode.RS_PROCEDURE_NOT_FOUND);
 
     return req.response.close();
   }
 
 
-  _send(HttpRequest req, List<int> body, int statusCode) {
+  _send(HttpRequest req, List<int> body, [RemoteServicesErrorCode errorCode]) {
+    int statusCode = HttpStatus.OK;
+
     if (allowOrigin != null) {
       req.response.headers.add("Access-Control-Allow-Credentials", "true");
       req.response.headers.add("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, X-PINGOTHER, X-File-Name, Cache-Control");
       req.response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS");
       req.response.headers.add("Access-Control-Allow-Origin", allowOrigin);
+    }
+
+    if (errorCode != null) {
+      if (errorCode == RemoteServicesErrorCode.RS_PROCEDURE_NOT_FOUND) {
+        statusCode = HttpStatus.NOT_FOUND;
+      }
+      else {
+        statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+      }
+      req.response.headers.add("X-Error-Code", errorCode.value);
     }
 
     req.response.statusCode = statusCode;

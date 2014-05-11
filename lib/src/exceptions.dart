@@ -8,19 +8,31 @@ class RemoteServicesException implements Exception {
 
   final String message;
 
-  RemoteServicesException([this.message]);
+  /**
+   * This class has only a private constructor since it should only be
+   * instantiated in this library.
+   */
+  RemoteServicesException._([this.message]);
 
 }
 
 
 /**
  * Thrown when a filter does not pass.
+ *
+ * This is a private class since it should never be visible by a consumer of
+ * this library.
  */
 class FilterException extends RemoteServicesException {
 
   final FilterFunction filter;
 
-  FilterException(this.filter);
+  String get filterName {
+    ClosureMirror closure = reflect(filter);
+    return MirrorSystem.getName(closure.function.simpleName);
+  }
+
+  FilterException(this.filter) : super._();
 
 }
 
@@ -34,12 +46,29 @@ class InvalidServiceDeclaration extends RemoteServicesException {
   final Service service;
 
 
-  InvalidServiceDeclaration(String message, this.service) : super(message);
+  InvalidServiceDeclaration._(String message, this.service) : super._(message);
   String toString() => "The service you provided (${this.service.toString()}) was invalid: $message";
 
 }
 
 
+/**
+ * Thrown internally with the appropriate error code.
+ */
+class _ErrorCodeException extends RemoteServicesException {
+
+
+  final RemoteServicesErrorCode errorCode;
+
+
+  /**
+   * You can pass an optiona [message] that will also be sent along to the client.
+   *
+   * Beware that his could potentially leak information if sent to a browser!
+   */
+  _ErrorCodeException(this.errorCode, [message]) : super._(message);
+
+}
 
 
 
@@ -48,7 +77,7 @@ class InvalidServiceDeclaration extends RemoteServicesException {
  */
 class RouteException extends RemoteServicesException {
 
-  final int errorCode;
+  final RemoteServicesErrorCode errorCode;
 
 
   /**
@@ -56,7 +85,7 @@ class RouteException extends RemoteServicesException {
    *
    * Beware that his could potentially leak information if sent to a browser!
    */
-  RouteException(this.errorCode, [message]) : super(message);
+  RouteException(this.errorCode, [message]) : super._(message);
 
 }
 

@@ -16,6 +16,7 @@ import "annotations.dart" as annotations;
 
 import "package:annotation_crawler/annotation_crawler.dart" as annotation_crawler;
 
+import "error_code.dart";
 
 
 part "src/exceptions.dart";
@@ -130,7 +131,7 @@ class ServiceDefinitions {
    * [Route] found in the service.
    */
   addService(Service service) {
-    if (servers.length != 0) throw new RemoteServicesException("You can't add a service after servers have been added.");
+    if (servers.length != 0) throw new RemoteServicesException._("You can't add a service after servers have been added.");
 
     for (var annotatedRoute in annotation_crawler.annotatedDeclarations(annotations.Route, on: reflectClass(service.runtimeType))) {
 
@@ -148,14 +149,14 @@ class ServiceDefinitions {
         // Using `.isSubtypeOf` here doesn't work because Future has Generics.
         if (method.returnType.qualifiedName != const Symbol("dart.async.Future") ||
             !returnType.isSubtypeOf(reflectClass(GeneratedMessage))) {
-          throw new InvalidServiceDeclaration("Every route needs to return a Future containing a GeneratedMessage.", service);
+          throw new InvalidServiceDeclaration._("Every route needs to return a Future containing a GeneratedMessage.", service);
         }
 
 
         if (method.parameters.length != 2 ||
             !method.parameters.first.type.isSubtypeOf(reflectClass(Context)) ||
             !method.parameters.last.type.isSubtypeOf(reflectClass(GeneratedMessage))) {
-          throw new InvalidServiceDeclaration("Every route needs to accept a Context and a GeneratedMessage object as parameters.", service);
+          throw new InvalidServiceDeclaration._("Every route needs to accept a Context and a GeneratedMessage object as parameters.", service);
         }
 
         var serviceRoute = new ServiceRoute(service, method, method.parameters.last.type.reflectedType, returnType.reflectedType, annotation.filters);
@@ -170,7 +171,7 @@ class ServiceDefinitions {
    * Sets all routes on the server and adds it to the list.
    */
   addServer(ServiceServer server) {
-    if (routes.isEmpty) throw new RemoteServicesException("You tried to add a server but no routes have been added yet.");
+    if (routes.isEmpty) throw new RemoteServicesException._("You tried to add a server but no routes have been added yet.");
 
     server._routes = routes;
     server._contextInitializer = contextInitializer;
