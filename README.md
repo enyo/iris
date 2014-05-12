@@ -412,7 +412,7 @@ This is why `remote_services` has the ability to include all necessary resources
 in the generated library so it can be shipped as a separate library, namely:
 
 - All protocol buffer messages
-- The error codes.
+- The error codes
 
 When invoking the `build` function of the builder, you can additionally pass
 the `ErrorCode` class with the `errorCodes` parameter. `remote_services` will
