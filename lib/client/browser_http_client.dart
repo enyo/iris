@@ -3,6 +3,7 @@ library browser_http_client;
 
 import "dart:html";
 import "dart:async";
+import "dart:convert";
 
 
 
@@ -67,6 +68,11 @@ class HttpServiceClient extends ServiceClient {
 
     xhr.setRequestHeader("Accept", "application/x-protobuf");
 
+    _rejectWithError(ServiceClientException exception) {
+      log.warning("Error (${exception.errorCode}) from remote service: ${exception.internalMessage}");
+      completer.completeError(exception);
+    }
+
     xhr.onLoad.listen((e) {
       // Note: file:// URIs have status of 0.
       if (xhr.status >= 200 && xhr.status < 300 && !xhr.responseHeaders.containsKey(ERROR_CODE_RESPONSE_HEADER)) {
@@ -75,18 +81,18 @@ class HttpServiceClient extends ServiceClient {
 
       } else {
         int errorCode = RemoteServicesErrorCode.RS_COMMUNICATION_ERROR.value;
-        String message = xhr.response;
+        String message = UTF8.decode(xhr.response);
 
         if (xhr.responseHeaders.containsKey(ERROR_CODE_RESPONSE_HEADER)) {
           errorCode = xhr.responseHeaders[ERROR_CODE_RESPONSE_HEADER];
         }
 
-        completer.completeError(new ServiceClientException(RemoteServicesErrorCode.RS_COMMUNICATION_ERROR, message));
+        _rejectWithError(new ServiceClientException(errorCode, message));
       }
     });
 
     xhr.onError.listen((err) {
-      completer.completeError(new ServiceClientException(RemoteServicesErrorCode.RS_COMMUNICATION_ERROR.value, err.toString()));
+      _rejectWithError(new ServiceClientException(RemoteServicesErrorCode.RS_COMMUNICATION_ERROR.value, err.toString()));
     });
 
     xhr.send(requestMessage == null ? null : requestMessage.writeToBuffer());
