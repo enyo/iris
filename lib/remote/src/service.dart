@@ -1,9 +1,9 @@
 part of remote_services;
 
 /**
- * The signature of a route in a [Service].
+ * The signature of a procedure in a [Service].
  */
-typedef Future<GeneratedMessage> RouteMethod(Context context, GeneratedMessage request);
+typedef Future<GeneratedMessage> ProcedureMethod(Context context, GeneratedMessage request);
 
 
 /**

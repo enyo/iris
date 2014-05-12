@@ -99,7 +99,8 @@ class ServiceProcedure {
    * resulting [GeneratedMessage].
    */
   Future<GeneratedMessage> invoke(Context context, GeneratedMessage requestMessage) {
-    List params = [context];
+    List params = [];
+    params.add(context); // I put this on a separate line because otherwise there was a type warning.
     if (expectedRequestType != null) params.add(requestMessage);
     return reflect(service).invoke(method.simpleName, params).reflectee;
   }
@@ -131,19 +132,33 @@ class ServiceDefinitions {
   List<ServiceServer> servers = [];
 
   /**
-   * Checks the service, and creates a list of [SerProcedurerocedure]s for every
+   * Checks the service, and creates a list of [ServiceProcedure]s for every
    * [Procedure] found in the service.
    */
   addService(Service service) {
     if (servers.length != 0) throw new RemoteServicesException._("You can't add a service after servers have been added.");
 
-    for (var annotatedProcedure in annotation_crawler.annotatedDeclarations(annotations.Procedure, on: reflectClass(service.runtimeType))) {
+    var reflectedServiceClass = reflectClass(service.runtimeType);
+    var serviceFilters = [];
+
+    // First check if the service has filters itself.
+    var serviceAnnotationInstanceMirror = reflectedServiceClass.metadata.firstWhere((InstanceMirror im) => im.type.isSubtypeOf(reflectClass(annotations.Service)), orElse: () => null);
+    if (serviceAnnotationInstanceMirror != null) {
+      annotations.Service serviceAnnotation = serviceAnnotationInstanceMirror.reflectee;
+      serviceFilters = serviceAnnotation.filters;
+    }
+
+
+    for (var annotatedProcedure in annotation_crawler.annotatedDeclarations(annotations.Procedure, on: reflectedServiceClass)) {
 
       if (annotatedProcedure.declaration is MethodMirror) {
         MethodMirror method = annotatedProcedure.declaration;
 
         annotations.Procedure annotation = annotatedProcedure.annotation;
 
+        List filters = []
+            ..addAll(serviceFilters)
+            ..addAll(annotation.filters);
 
         /// Now check that the method is actually of type [ProcedureMethod].
         /// See: http://stackoverflow.com/questions/23497032/how-do-check-if-a-methodmirror-implements-a-typedef
@@ -175,7 +190,7 @@ class ServiceDefinitions {
 
         var requestType = method.parameters.length == 2 ? method.parameters.last.type.reflectedType : null;
 
-        var serviceProcedure = new ServiceProcedure(service, method, requestType, returnType, annotation.filters);
+        var serviceProcedure = new ServiceProcedure(service, method, requestType, returnType, filters);
         log.fine("Found procedure ${serviceProcedure.methodName} on service ${serviceProcedure.serviceName}");
         procedures.add(serviceProcedure);
       }

@@ -2,7 +2,7 @@
 import 'package:logging/logging.dart';
 
 import "remote_service_request_tests.dart" as requestTests;
-import "services_tests.dart" as servicesTests;
+import "service_definitions_tests.dart" as serviceDefinitionsTests;
 import "server_tests.dart" as serverTests;
 import "builder_tests.dart" as builderTests;
 import "filter_tests.dart" as filterTests;
@@ -15,7 +15,7 @@ main() {
 //  Logger.root.onRecord.listen((LogRecord record) => print('${record.loggerName} (${record.level}): ${record.message}'));
 
   requestTests.main();
-  servicesTests.main();
+  serviceDefinitionsTests.main();
   serverTests.main();
   builderTests.main();
   filterTests.main();

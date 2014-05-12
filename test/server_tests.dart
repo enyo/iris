@@ -8,7 +8,7 @@ import "package:mock/mock.dart";
 import "package:protobuf/protobuf.dart";
 
 import "../lib/remote/remote_services.dart";
-import "../lib/remote/annotations.dart";
+import "../lib/remote/annotations.dart" as anno;
 
 
 
@@ -23,7 +23,7 @@ class TestServer extends Mock implements ServiceServer {
 
 class TestService extends Service {
 
-  @Procedure()
+  @anno.Procedure()
   Future<TestResponse> create(Context context, TestRequest req) {
     return null;
   }
@@ -33,7 +33,7 @@ class TestService extends Service {
 
 class NoGeneratedMessageRouteService extends Service {
 
-  @Procedure()
+  @anno.Procedure()
   Future<String> create(Context context, TestRequest req) => null;
 
 }
@@ -41,7 +41,7 @@ class NoGeneratedMessageRouteService extends Service {
 
 class WrongParamsRouteService extends Service {
 
-  @Procedure()
+  @anno.Procedure()
   Future<TestResponse> create(TestRequest req, Context context) => null;
 
 }
