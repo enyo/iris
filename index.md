@@ -74,8 +74,8 @@ gives you a *dart* object of the proper type.
 
 All communication is handled by the *remote services library*. You don't ever
 need to think about how the data is being transferred. All you need to think
-about is: what message do I send the remote service, and what message do I want
-to get back.
+about is: what message do I send to the remote service, and what message do I
+want to get back.
 
 
 ## Error handling
@@ -84,3 +84,24 @@ The *remote services library* completely takes care of error handling for you.
 
 Errors are sent using error codes that you define on your server. All clients
 get access to that error codes and can handle errors appropriately.
+
+
+## How does it work?
+
+You write your services (classes that contain your *procedures*) on the server,
+provide it to the library.
+
+The library then does two things for you:
+
+1. I generates the files for the client
+2. It starts a server for you that listens for requests from the client
+
+This is an example of a generated service class for the client:
+
+<script src="https://gist.github.com/enyo/2a162ef9cf43ab042725.js"></script>
+
+As you can see, it contains the generated path for the resources, and the request
+as well as the return types for requests.
+
+For a complete explanation and reference, please see the
+[remote services README](https://github.com/enyo/remote-services/blob/master/README.md).

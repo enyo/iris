@@ -84,6 +84,21 @@ code {
 }
 
 
+.gist {
+  font-size: 0.8em;
+  line-height: 1.2em;
+}
+pre code {
+  display: block;
+  font-size: 0.8em;
+  white-space: pre;
+  overflow: auto;
+  padding: 0.4em 0.8em;
+}
+
+
+
+
 @media (max-width: 640px) {
   body {
     font-size: 16px;
