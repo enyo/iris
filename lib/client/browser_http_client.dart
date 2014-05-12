@@ -29,7 +29,7 @@ class HttpServiceClient extends ServiceClient {
 
   final bool withCredentials;
 
-  HttpServiceClient(this.baseUri, {this.withCredentials: false});
+  HttpServiceClient(this.baseUri, {this.withCredentials: true});
 
 
   /**
