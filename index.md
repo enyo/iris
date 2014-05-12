@@ -93,7 +93,7 @@ provide it to the library.
 
 The library then does two things for you:
 
-1. I generates the files for the client
+1. It generates the files for the client
 2. It starts a server for you that listens for requests from the client
 
 This is an example of a generated service class for the client:
