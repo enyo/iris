@@ -215,7 +215,63 @@ main() {
 
 ### Error codes
 
-> Documentation not ready yet, but ready to use!
+If an error occurs anywhere in a remote service request you **always** get a
+`ServiceClientException`. This `ServiceClientException` has an `errorCode` and
+an `internalMessage`.
+
+> **Never show the `internalMessage` to the user!** It is only meant to be logged
+> or inspected by developers.
+
+`errorCode`s are all you need to tell the client what's wrong. Every time you
+encounter a problem in your service, think about what you want to tell the client
+and create an error code for it.
+
+This is how you setup error codes on the server:
+
+```dart
+class ErrorCode extends RemoteServicesErrorCode {
+
+  static const INVALID_USERNAME_OR_PASSWORD = const ErrorCode._(0);
+
+  static const INVALID_EMAIL = const ErrorCode._(1);
+
+  const ErrorCode._(int value) : super(value);
+
+}
+```
+
+and this is how you would throw an error code in a *procedure*:
+
+```dart
+class UserService extends Service {
+
+  @Procedure()
+  Future create(MyContext context) {
+    throw new ProcedureException(ErrorCode.INVALID_EMAIL, "Oh noes.");
+  }
+
+}
+```
+
+on your client;
+
+```dart
+services.userService.create().then(print)
+    .catchError((ServiceClientException ex) {
+      if (ex.errorCode == ErrorCode.INVALID_EMAIL) {
+        alert("Please provide a valid email address");
+      }
+      log.info(ex.internalMessage);
+    });
+```
+
+There are several internal error codes that you can receive on the client. Look
+at the `RemoteServicesErrorCode` class to see what they are.
+
+> If you provide this `ErrorCode` class to the `build` function of the builder,
+> an `error_code.dart` file is generated, containing all error codes as integers
+> to be used on the client.
+
 
 ### Context initializers
 
