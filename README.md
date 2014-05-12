@@ -24,7 +24,7 @@ The typical setup is as follows:
    services together and setup a server.
 4. [Create a server binary](#create-a-server-binary) which you can then execute
    to start your remote server.
-5. [Setup the build.dart file](#setup-build.dart) to generate the client library.
+5. [Setup the build.dart file](#setup-builddart) to generate the client library.
 6. [Use the library on the client](#on-the-client)
 
 As you go along you will need more control over your configuration:
