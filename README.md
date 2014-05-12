@@ -181,6 +181,9 @@ void main(List<String> args) {
 }
 ```
 
+The builder will now rebuild your client library every time either your protocol
+buffer messages or your services (only if you specify `servicesDirectory`) change.
+
 See the [standalone library](#standalone-library) section for more information
 on how to setup your `build.dart` file to create a standalone library that can
 be distributed separately.
