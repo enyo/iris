@@ -18,7 +18,7 @@ When you're building web applications you nearly always have different parts of
 your application communicating with one another (for example: the browser
 requesting data from the server via AJAX).
 
-Most commonly this communication is done by creating a HTTP server, defining an
+Most commonly this communication is done by creating an HTTP server, defining an
 API and sending JSON data.
 
 There are multiple things wrong with this approach:
@@ -52,7 +52,7 @@ incredibly painful! If you don't know a library well, you need to check the
 documentation all the time (if there is one up to date), and spotting errors can
 be very difficult.
 
-So don't waste any more time and *check out dart*. Once you've starting working
+So don't waste any more time and *check out dart*. Once you've started working
 with it for a while, you really start to wonder how you were able to put up with
 JavaScript when you have to work on some JS code again. Just clicking on a function
 name and getting the declaration, having the dart editor tell you the second you
