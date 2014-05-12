@@ -35,6 +35,7 @@ As you go along you will need more control over your configuration:
   and *procedures*.
 - [Write filters for your services and procedures](#filters) to reject requests
   on certain conditions (eg: **authentication**).
+- [Release the generated files as standalone library](#standalone-library)
 
 ### Setup protocol buffers
 
@@ -180,6 +181,9 @@ void main(List<String> args) {
 }
 ```
 
+See the [standalone library](#standalone-library) section for more information
+on how to setup your `build.dart` file to create a standalone library that can
+be distributed separately.
 
 ### On the client
 
@@ -385,6 +389,43 @@ will be sent to the client.
 
 If you have set a `ContextInitializer` all filter functions will receive the
 context returned by this function.
+
+### Standalone library
+
+There are two ways you can distribute your remote services:
+
+1. As part of your server library
+2. As a separate, standalone library
+
+Releasing the remote services as part of your library is easier. You can just
+let the build script create the necessary client files in your `lib/` directory,
+and users can use your server as a dependency, and import the generated *remote
+service* files. This means that the user has access to your protocol buffer and
+`ErrorCode` files (since they are already in your server library).
+
+The disadvantage of this approach is, of course, that your whole server needs to
+be exposed. This is fine if your library is only used internally (since you can
+have a dependency on a private repository), but if you want to distribute the
+generated client library to other users this won't be working anymore.
+
+This is why `remote_services` has the ability to include all necessary resources
+in the generated library so it can be shipped as a separate library, namely:
+
+- All protocol buffer messages
+- The error codes.
+
+When invoking the `build` function of the builder, you can additionally pass
+the `ErrorCode` class with the `errorCodes` parameter. `remote_services` will
+then generate a `error_code.dart` file with an `ErrorCode` class that contains
+*all* error codes.
+
+If you set the `includePbMessages` option to `true`, `remote_services` will also
+copy over all protocol buffer messages, and put them in the `proto/` folder.
+
+With the `targetDirectory` argument (the second positional argument), you can
+define a directory *outside* your server directory, which is the library that
+you can ship without having to worry about leaking sensitive code.
+
 
 
 
