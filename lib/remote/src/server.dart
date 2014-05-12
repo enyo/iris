@@ -174,7 +174,9 @@ class HttpServiceServer extends ServiceServer {
         // Invoke the procedure
         .then((_) => procedure.invoke(context, requestMessage))
         // And send the response
-        .then((GeneratedMessage responseMessage) => _send(req, procedure.responseType == null ? [] : responseMessage.writeToBuffer()))
+        // Not adding the [GeneratedMessage] type here, since not all procedures
+        // need to return a GeneratedMessage.
+        .then((responseMessage) => _send(req, procedure.responseType == null ? [] : responseMessage.writeToBuffer()))
         .catchError((err) {
 
           RemoteServicesErrorCode errorCode = RemoteServicesErrorCode.RS_INTERNAL_SERVER_ERROR;
