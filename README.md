@@ -45,7 +45,7 @@ services (in contrast to JSON where you have to take care of validating the data
 yourself, and always need to look at the documentation to see what you actually
 receive).
 
-The way the work in dart is: you define your messages in `.proto` files and a
+The way they work in dart is: you define your messages in `.proto` files and a
 library converts them to `dart` classes (subclasses of `GeneratedMessage`) which
 are typed and allow for auto completion and type checking.
 
@@ -183,7 +183,7 @@ void main(List<String> args) {
 
 ### On the client
 
-`remote_services` provides two types of client libraries: one the is meant to be
+`remote_services` provides two types of client libraries: one is meant to be
 used on a server, and one for the browser.
 
 Here's an example of using the remote services in a browser:
@@ -375,7 +375,7 @@ class UserService extends Service {
 }
 ```
 
-If a filter returns `false`, the procedure will *not* be called, and the an error
+If a filter returns `false`, the procedure will *not* be called, and an error
 will be sent to the client.
 
 > After the `ContextInitializer` function, all defined filters will be called
