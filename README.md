@@ -2,7 +2,7 @@
 
 [![Build Status](https://drone.io/github.com/enyo/remote-services/status.png)](https://drone.io/github.com/enyo/remote-services/latest)
 
-A complete abstraction of client <-> server communication.
+A complete abstraction of client ↔ server communication.
 
 It is basically a [remote procedure call](http://en.wikipedia.org/wiki/Remote_procedure_call)
 implementation in dart. You can call the methods on your services and get the
