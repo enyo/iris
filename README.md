@@ -253,7 +253,7 @@ class UserService extends Service {
 }
 ```
 
-on your client;
+on your client:
 
 ```dart
 services.userService.create().then(print)
