@@ -8,8 +8,9 @@ layout: default
 > communication.  
 > It is basically a
 > [remote procedure call](http://en.wikipedia.org/wiki/Remote_procedure_call)
-> implementation in dart.
+> implementation in *dart*.
 
+[Hosted on GitHub](https://github.com/enyo/remote-services)
 
 ## Introduction
 
@@ -38,8 +39,8 @@ There are multiple things wrong with this approach:
 
 ## Dart
 
-*Stop using JavaScript!* Don't get me wrong: I like JavaScript. I wrote two extremely
-known libraries ([dropzone](http://www.dropzonejs.com/) and
+*Stop using JavaScript!* Don't get me wrong: I like JavaScript. I wrote two very
+well known libraries ([dropzone](http://www.dropzonejs.com/) and
 [opentip](http://www.opentip.org/)), a few lesser known libraries
 ([mongo-rest](https://github.com/enyo/mongo-rest) and
 [node-tvdb](https://github.com/enyo/node-tvdb)) and countless servers and client
@@ -63,3 +64,23 @@ productive and stable workflow.
 Instead of using JSON, which is basically just a Map without any type or
 structure information whatsoever, the *remote services* library uses
 [protocol buffers](http://en.wikipedia.org/wiki/Protocol_Buffers).
+
+Whenever you define a procedure, you specify what protocol buffer message you
+are sending back, and which one you want to receive. The *remote services library*
+automatically checks the type, makes sure that the message is well formatted, and
+gives you a *dart* object of the proper type.
+
+## Communication
+
+All communication is handled by the *remote services library*. You don't ever
+need to think about how the data is being transferred. All you need to think
+about is: what message do I send the remote service, and what message do I want
+to get back.
+
+
+## Error handling
+
+The *remote services library* completely takes care of error handling for you.
+
+Errors are sent using error codes that you define on your server. All clients
+get access to that error codes and can handle errors appropriately.
