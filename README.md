@@ -265,8 +265,8 @@ services.userService.create().then(print)
     });
 ```
 
-There are several internal error codes that you can receive on the client. Look
-at the `RemoteServicesErrorCode` class to see what they are.
+There are several *internal* error codes that you can receive on the client as
+well. Look at the `RemoteServicesErrorCode` class to see what they are.
 
 > If you provide this `ErrorCode` class to the `build` function of the builder,
 > an `error_code.dart` file is generated, containing all error codes as integers
