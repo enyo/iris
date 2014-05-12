@@ -17,3 +17,20 @@
 <div id="container">
   {{ content }}
 </div>
+
+
+<script>
+
+var headings = document.querySelectorAll("h1,h2,h3");
+
+for (var i = 0; i < headings.length; i++) {
+  var heading = headings[i];
+  if (heading.id) {
+    var anchorLink = document.createElement("a");
+    anchorLink.className = "anchor-link";
+    anchorLink.href = "#" + heading.id;
+    anchorLink.innerHTML = "#"
+    heading.appendChild(anchorLink);
+  }
+}
+</script>
