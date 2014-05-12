@@ -29,6 +29,21 @@ class ServiceRequest {
 
   ServiceRequest.fromSocket() : _httpRequest = null;
 
+
+  /**
+   * Stores a cookie on the client if possible.
+   *
+   * Throws an exception if the connection doesn't allow it.
+   */
+  addCookie(Cookie cookie) {
+    if (_httpRequest != null) {
+      _httpRequest.response.cookies.add(cookie);
+    }
+    else {
+      throw new RemoteServicesException._("Trying to set cookie but it's not a Http request.");
+    }
+  }
+
 }
 
 
