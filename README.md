@@ -14,37 +14,150 @@ result back in futures without having to think about the communication.
 You can look at the [example repository](https://github.com/enyo/remote-services-example)
 for an implementation.
 
-### On the server
+The typical setup is as follows:
 
-Define your services:
+
+1. [Setup your server to generate protocol buffer messages](#setup-protocol-buffers)
+2. [Write your services & procedures](#write-services-on-server) that handle the
+   requests.
+3. [Create the service definitions](#create-service-definitions) that group your
+   services together and setup a server.
+4. [Create a server binary](#create-a-server-binary) which you can then execute
+   to start your remote server.
+5. [Setup the build.dart file](#setup-build.dart) to generate the client library.
+6. [Use the library on the client](#on-the-client)
+
+As you go along you will need more control over your configuration:
+
+- [Use error codes](#error-codes) to tell the client what went wrong.
+- [Write a context initializer](#context-initializers) to add additional
+  information (eg: session information) to the `Context` received by *filters*
+  and *procedures*.
+- [Write filters for your services and procedures](#filters) to reject requests
+  on certain conditions (eg: **authentication**).
+
+### Setup protocol buffers
+
+[Protocol buffers](http://en.wikipedia.org/wiki/Protocol_Buffers) are a method
+of serializing structured data. They are fast and performant, developed and
+used by *Google*, and are a great way to define the data being passed between
+services (in contrast to JSON where you have to take care of validating the data
+yourself, and always need to look at the documentation to see what you actually
+receive).
+
+The way the work in dart is: you define your messages in `.proto` files and a
+library converts them to `dart` classes (subclasses of `GeneratedMessage`) which
+are typed and allow for auto completion and type checking.
+
+Whenever a message in `remote_services` is sent or received, it is an instance
+of `GeneratedMessage`.
+
+
+### Write services on server
+
+Services basically are bundles of `Procedures`. If you have a service class
+named `UserService` with a *procedure* (a method on this class, with the
+`Procedure` annotation) named `create`, then you will be able to call this
+remote procedure from the client with `userService.create()`.
+
+Every *procedure* receives a `Context` as first parameter and *can* accept a
+`GeneratedMessage` (protocol buffer message) as a second parameter.  
+The `Context` contains basic request information (like cookies). If you want to
+add additional information to the `Context` object, see the
+[context initializers](#context-initializers) section.
+
+
+This is a simple *service* example:
 
 ```dart
 class UserService extends Service {
-  
+
+  /**
+   * This procedure has both, a return type ([CreateUserResponse]) and an
+   * expected request message ([CreateUserRequest]).
+   */
   @Procedure()
   Future<CreateUserResponse> create(Context context, CreateUserRequest request) {
-  
+    // Create the user, and return a CreateUserResponse
   }
 
-}
+  /**
+   * This procedure has no return type, so `remote_services` will assume that
+   * nothing will be sent back to the client. It will just await the execution.
+   */
+  @Procedure()
+  Future delete(Context context, DeleteUserRequest request) {
+      // Delete the user, and return a resolved Future
+  }
 
-ServiceDefinitions getServiceDefinitions() {
-  return new ServiceDefinitions()
-      ..addService(UserService)
-      ..addServer(new HttpServiceServer());
+  /**
+   * This is an example procedure that receives and returns no message.
+   */
+  @Procedure()
+  Future ping(Context context) => new Future.value();
+
 }
 ```
 
-Then in your `/bin/` folder you have a script that calls:
+As you can see, procedures can either accept and return `GeneratedMessage`s or
+not. `remote_services` understands this, and builds your client library
+accordingly so you have proper auto completion when writing your client library.
+
+
+### Create service definitions
+
+In a separate file you create a `getServiceDefinitions()` function that returns
+a `ServiceDefinitions` object. This object will be used to start the server, and
+to build the files for the client.
+
+Example `lib/service_definitions.dart`:
 
 ```dart
-import "my_services.dart";
+library service_definitions;
 
-getServiceDefinitions().startServers();
+import "package:remote_services/remote/remote_services.dart";
+
+// This is the file that contains all your services
+import "services/services.dart";
+
+ServiceDefinitions getServices() {
+  return new ServiceDefinitions()
+        // Add the services you want to be served
+        ..addService(new UserService())
+        ..addService(new AuthenticationService())
+        // Add the servers you want to use
+        ..addServer(new HttpServiceServer("localhost", 8088, allowOrigin: "http://127.0.0.1:3030"));
+}
 ```
 
-And in your `build.dart` you set the script to generate the client classes:
+### Create a server binary
 
+To actually start the remote server which will listen on incoming connections,
+you simply include those `ServiceDefinitions` and call `.startServers()` on it.
+
+Example `bin/start_server.dart`:
+
+```dart
+import "../lib/service_definitions.dart";
+
+main() {
+  // Starts all servers that have been added with `.addServer()`.
+  getServiceDefinitions().startServers();
+}
+```
+
+
+### Setup build.dart
+
+Now everything on your server is ready! The services are served automatically
+and are listening for incoming requests.
+
+To use this remote services on the client, `remote_services` generates a library
+to be used on the client. This allows you to have completely typed classes that
+you can use, with autocompletion and request / return types.
+
+To let `remote_services` build your client libraries, you need to edit your
+`build.dart` and add this build command:
 
 ```dart
 library build;
@@ -60,29 +173,34 @@ const RS_PROTO_BUFFER_MESSAGES = "lib/proto/messages.dart";
 
 const RS_SERVICES_DIR = "lib/services/";
 
-
 void main(List<String> args) {
 
   remote_services.build(getServices(), RS_TARGET, RS_PROTO_BUFFER_MESSAGES, args: args, includePbMessages: true, servicesDirectory: RS_SERVICES_DIR);
 
 }
-
-
 ```
+
 
 ### On the client
 
+`remote_services` provides two types of client libraries: one the is meant to be
+used on a server, and one for the browser.
 
-You import the generated classes from the server, and use the services like this:
-
+Here's an example of using the remote services in a browser:
 
 ```dart
 import "package:remote_services/client/browser_http_client.dart";
 
+// This includes your generated library
+import "package:my-generated-remote-services/services.dart";
+
 main() {
   var client = new HttpServiceClient(Uri.parse("http://localhost:8088"));
 
+  // Create an instance of your services
   var services = new Services(client);
+
+  // And you're good to go!
 
   AuthenticationRequest req = new AuthenticationRequest()
       ..email = "e@mail.com"
@@ -93,9 +211,11 @@ main() {
 }
 ```
 
-
-
 ## Advanced configuration
+
+### Error codes
+
+> Documentation not ready yet, but ready to use!
 
 ### Context initializers
 
@@ -165,7 +285,8 @@ So, every time you receive a `Context` object, it is now a `MyContext` instance.
 
 Often you need your procedures to be filtered, for example if you need authentication.
 
-Filters are defined with the `Procedure` annotation and this is their `typedef`:
+Filters are defined with the `Service` or the `Procedure` annotation and this is
+their `typedef`:
 
 ```dart
 typedef Future<bool> FilterFunction(Context context);
@@ -180,12 +301,20 @@ Future<bool> authenticationFilter(Context context) {
   return new Future.value(true);
 }
 
+Future<bool> adminRightsFilter(Context context) {
+  // Make sure the user has admin rights
+  return new Future.value(true);
+}
+
+
+/// All procedures in this service will have the `authenticationFilter`.
+@Service(filters: const [authenticationFilter])
 class UserService extends Service {
-  
-  @Procedure(filters: const[authenticationFilter])
-  Future<CreateUserResponse> create(Context context, CreateUserRequest request) {
-  
-  }
+
+  /// In addition to the `authenticationFilter` this procedure also has the
+  /// `adminRightsFilter`.
+  @Procedure(filters: const [adminRightsFilter])
+  Future<CreateUserResponse> create(Context context, CreateUserRequest request) => new Future.value();
 
 }
 ```
@@ -195,8 +324,34 @@ will be sent to the client.
 
 > After the `ContextInitializer` function, all defined filters will be called
 > **sequentially and in the defined order** and processing the request is
-> immediately stopped when one filter returns `false`.
+> immediately stopped when one filter returns `false`.  
+> **Service filters are always the first filters to run.**
 
 If you have set a `ContextInitializer` all filter functions will receive the
 context returned by this function.
 
+
+
+# License
+
+(The MIT License)
+
+Copyright (c) 2014 Matias Meno &lt;m@tias.me&gt;<br>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
