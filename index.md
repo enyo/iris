@@ -25,12 +25,12 @@ There are multiple things wrong with this approach:
 
 1. You need to think of your API *very carefully*. Changing your URL from
     `/user/create` to `/users/create` will break all clients **without them even
-    knowing** until they experience the error.
+    knowing** until they try to access the route and get a 404 error.
 2. The same goes for your JSON data. Consumers of your API will need to look at
     your documentation to know exactly what data will be submitted, and if you
     change something they will never know. A simple typo like `isDeleted` instead
-    of `is_deleted` can potentially result in a broken app and it's very hard to
-    find that error.
+    of `is_deleted` can potentially result in a broken app and an error that's
+    very hard to find.
 3. *Every client and server* needs to implement the communication (writing the AJAX call,
     handling errors, etc...).
 
@@ -46,18 +46,17 @@ well known libraries ([dropzone](http://www.dropzonejs.com/) and
 [node-tvdb](https://github.com/enyo/node-tvdb)) and countless servers and client
 libraries for personal and professional use.
 
-But when you work on bigger projects, where stability is an issue and when you
-start working with bigger teams, using a language without types is just
-incredibly painful! If you don't know a library well, you need to check the
-documentation all the time (if there is one up to date), and spotting errors can
-be very difficult.
+When working on bigger projects however, where stability is an issue and bigger
+teams are involved, using a language without types is just incredibly painful!
+If you don't know a library well, you need to check the documentation all the
+time (if there is one up to date), and spotting errors can be very difficult.
 
 So don't waste any more time and *check out dart*. Once you've started working
 with it for a while, you really start to wonder how you were able to put up with
 JavaScript when you have to work on some JS code again. Just clicking on a function
 name and getting the declaration, having the dart editor tell you the second you
-type a function name what parameters it accepts is just incredibly crucial to a
-productive and stable workflow.
+type a function name what parameters it accepts is crucial to a productive and
+stable workflow.
 
 ## Protocol buffers
 
