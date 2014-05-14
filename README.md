@@ -1,6 +1,6 @@
 # Remote services
 
-[![Build Status](https://drone.io/github.com/enyo/remote-services/status.png)](https://drone.io/github.com/enyo/remote-services/latest)
+[![Build Status](https://drone.io/github.com/enyo/iris/status.png)](https://drone.io/github.com/enyo/iris/latest)
 
 A complete abstraction of client ↔ server communication.
 
