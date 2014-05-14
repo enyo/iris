@@ -6,12 +6,12 @@ import 'package:fixnum/fixnum.dart';
 import "package:unittest/unittest.dart";
 
 
-import "package:remote_services/client/client.dart" as client_lib;
-import "package:remote_services/client/server_http_client.dart";
+import "package:iris/client/client.dart" as client_lib;
+import "package:iris/client/server_http_client.dart";
 
-import "package:remote_services/remote/remote_services.dart" as remote;
-import "package:remote_services/remote/error_code.dart";
-import "package:remote_services/remote/annotations.dart" as annotation;
+import "package:iris/remote/remote_services.dart" as remote;
+import "package:iris/remote/error_code.dart";
+import "package:iris/remote/annotations.dart" as annotation;
 
 import "src/authentication.pb.dart";
 import "src/user.pb.dart";
