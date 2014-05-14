@@ -4,7 +4,7 @@ part of iris;
 /**
  * The base class for all remote_services exceptions.
  */
-class RemoteServicesException implements Exception {
+class IrisException implements Exception {
 
   final String message;
 
@@ -12,7 +12,7 @@ class RemoteServicesException implements Exception {
    * This class has only a private constructor since it should only be
    * instantiated in this library.
    */
-  RemoteServicesException._([this.message]);
+  IrisException._([this.message]);
 
 }
 
@@ -23,7 +23,7 @@ class RemoteServicesException implements Exception {
  * This is a private class since it should never be visible by a consumer of
  * this library.
  */
-class FilterException extends RemoteServicesException {
+class FilterException extends IrisException {
 
   final FilterFunction filter;
 
@@ -41,7 +41,7 @@ class FilterException extends RemoteServicesException {
  * Thrown whenever you call [RemoteServices.addService] with a [Service] that
  * contains invalid procedures.
  */
-class InvalidServiceDeclaration extends RemoteServicesException {
+class InvalidServiceDeclaration extends IrisException {
 
   final Service service;
 
@@ -55,7 +55,7 @@ class InvalidServiceDeclaration extends RemoteServicesException {
 /**
  * Thrown internally with the appropriate error code.
  */
-class _ErrorCodeException extends RemoteServicesException {
+class _ErrorCodeException extends IrisException {
 
 
   final IrisErrorCode errorCode;
@@ -75,7 +75,7 @@ class _ErrorCodeException extends RemoteServicesException {
 /**
  * Throw this in your procedures when you want to send an error code to the client.
  */
-class ProcedureException extends RemoteServicesException {
+class ProcedureException extends IrisException {
 
   final IrisErrorCode errorCode;
 

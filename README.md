@@ -383,7 +383,8 @@ class UserService extends Service {
 ```
 
 If a filter returns `false`, the procedure will *not* be called, and an error
-will be sent to the client.
+will be sent to the client. If you want the client to receive a specific error
+code, then you can use the `ProcedureException` for that.
 
 > After the `ContextInitializer` function, all defined filters will be called
 > **sequentially and in the defined order** and processing the request is

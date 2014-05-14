@@ -17,7 +17,7 @@ import "annotations.dart" as annotations;
 import "package:annotation_crawler/annotation_crawler.dart" as annotation_crawler;
 
 import "error_code.dart";
-import "../src/consts.dart";
+import "../src/error_message.dart";
 
 part "src/exceptions.dart";
 part "src/server.dart";
@@ -135,7 +135,7 @@ class Iris {
    * [Procedure] found in the service.
    */
   addService(Service service) {
-    if (servers.length != 0) throw new RemoteServicesException._("You can't add a service after servers have been added.");
+    if (servers.length != 0) throw new IrisException._("You can't add a service after servers have been added.");
 
     var reflectedServiceClass = reflectClass(service.runtimeType);
     var serviceFilters = [];
@@ -201,7 +201,7 @@ class Iris {
    * Sets all procedures on the server and adds it to the list.
    */
   addServer(IrisServer server) {
-    if (procedures.isEmpty) throw new RemoteServicesException._("You tried to add a server but no procedures have been added yet.");
+    if (procedures.isEmpty) throw new IrisException._("You tried to add a server but no procedures have been added yet.");
 
     server._procedures = procedures;
     server._contextInitializer = contextInitializer;

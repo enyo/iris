@@ -40,7 +40,7 @@ class IrisRequest {
       _httpRequest.response.cookies.add(cookie);
     }
     else {
-      throw new RemoteServicesException._("Trying to set cookie but it's not a Http request.");
+      throw new IrisException._("Trying to set cookie but it's not a Http request.");
     }
   }
 
@@ -176,7 +176,7 @@ class HttpIrisServer extends IrisServer {
         // And send the response
         // Not adding the [GeneratedMessage] type here, since not all procedures
         // need to return a GeneratedMessage.
-        .then((responseMessage) => _send(req, procedure.responseType == null ? [] : responseMessage.writeToBuffer()))
+        .then((responseMessage) => _sendMessage(req, procedure.responseType == null ? null : responseMessage))
         .catchError((err) {
 
           IrisErrorCode errorCode = IrisErrorCode.IRIS_INTERNAL_SERVER_ERROR;
@@ -191,7 +191,7 @@ class HttpIrisServer extends IrisServer {
             errorMessage = "The filter '${err.filterName}' rejected the request.";
           }
 
-          _send(req, UTF8.encode(errorMessage), errorCode);
+          _sendError(req, errorCode, errorMessage);
 
         });
   }
@@ -199,30 +199,52 @@ class HttpIrisServer extends IrisServer {
   serveNotFound(HttpRequest req) {
     log.finest("Sending 404 for procedure: ${req.uri.path}");
 
-    _send(req, UTF8.encode("The requested procedure was not found."), IrisErrorCode.IRIS_PROCEDURE_NOT_FOUND);
+    _sendError(req, IrisErrorCode.IRIS_PROCEDURE_NOT_FOUND, "The requested procedure was not found.");
 
     return req.response.close();
   }
 
 
-  _send(HttpRequest req, List<int> body, [IrisErrorCode errorCode]) {
-    int statusCode = HttpStatus.OK;
+  /**
+   * This is the function to call to send data to the client.
+   */
+  _sendMessage(HttpRequest req, GeneratedMessage message) {
+    _send(req, message == null ? [] : message.writeToBuffer());
+  }
+
+
+  /**
+   * Sends the write error protocol buffer to the client.
+   */
+  _sendError(HttpRequest req, IrisErrorCode errorCode, String errorMessage) {
+
+    int statusCode;
+
+    if (errorCode == IrisErrorCode.IRIS_PROCEDURE_NOT_FOUND) {
+      statusCode = HttpStatus.NOT_FOUND;
+    }
+    else {
+      statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+    }
+
+    var message = new IrisErrorMessage()
+        ..errorCode = errorCode.value
+        ..message = errorMessage;
+
+    _send(req, message.writeToBuffer(), statusCode);
+  }
+
+
+  /**
+   * Don't use this method directly. Use [_sendError] or [_sendMessage] instead.
+   */
+  _send(HttpRequest req, List<int> body, [int statusCode = HttpStatus.OK]) {
 
     if (allowOrigin != null) {
       req.response.headers.add("Access-Control-Allow-Credentials", "true");
       req.response.headers.add("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, X-PINGOTHER, X-File-Name, Cache-Control");
       req.response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS");
       req.response.headers.add("Access-Control-Allow-Origin", allowOrigin);
-    }
-
-    if (errorCode != null) {
-      if (errorCode == IrisErrorCode.IRIS_PROCEDURE_NOT_FOUND) {
-        statusCode = HttpStatus.NOT_FOUND;
-      }
-      else {
-        statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-      }
-      req.response.headers.add(ERROR_CODE_RESPONSE_HEADER, errorCode.value);
     }
 
     req.response.statusCode = statusCode;

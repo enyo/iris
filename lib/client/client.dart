@@ -2,9 +2,18 @@ library client;
 
 import "dart:mirrors";
 import "dart:async";
+import "dart:convert";
 
+import "package:logging/logging.dart";
 import "package:protobuf/protobuf.dart";
-import "../remote/error_code.dart";
+import '../remote/error_code.dart';
+import '../src/error_message.dart';
+
+
+
+
+Logger log = new Logger("IrisClient");
+
 
 /**
  * Whenever an error occurs, this is the exception you get out of it.
@@ -21,7 +30,7 @@ class IrisException implements Exception {
   IrisException(this.errorCode, [this.internalMessage]);
 
 
-  String toString() => "ServiceClientException with error code ${errorCode}." + internalMessage == null ? "" : " Error: " + internalMessage;
+  String toString() => "ServiceClientException with error code ${errorCode}." + (internalMessage == null ? "" : " Error: " + internalMessage);
 
 }
 
@@ -67,6 +76,39 @@ abstract class IrisClient {
       return message;
     }
   }
+
+
+  /**
+   * Takes a list of bytes, tries to map it to a [IrisErrorMessage] and
+   * returns an [IrisException] with given values.
+   *
+   * If the bytes are not a proper [IrisErrorMessage], it will generate an
+   * [IrisException] with the appropriate error codes.
+   */
+  IrisException getIrisExceptionFromBytes(List<int> bytes) {
+
+    int errorCode;
+    String message;
+
+    try {
+      IrisErrorMessage pbMessage = new IrisErrorMessage.fromBuffer(bytes);
+      pbMessage.check();
+      errorCode = pbMessage.errorCode;
+      message = pbMessage.message;
+    }
+    catch (e) {
+      int errorCode = IrisErrorCode.IRIS_COMMUNICATION_ERROR.value;
+      String message = UTF8.decode(bytes);
+    }
+
+    return new IrisException(errorCode, message);
+  }
+
+
+  logIrisException(IrisException exception) {
+    log.warning("Iris Error (${exception.errorCode}): ${exception.internalMessage}");
+  }
+
 
 }
 

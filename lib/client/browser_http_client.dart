@@ -3,8 +3,6 @@ library browser_http_client;
 
 import "dart:html";
 import "dart:async";
-import "dart:convert";
-
 
 
 import "package:protobuf/protobuf.dart";
@@ -12,11 +10,13 @@ import "package:logging/logging.dart";
 
 
 import 'client.dart';
+
+/// So the [IrisException] is visible.
+export 'client.dart';
+
 import '../remote/error_code.dart';
-import '../src/consts.dart';
 
 Logger log = new Logger("IrisClient");
-
 
 
 /**
@@ -69,30 +69,25 @@ class HttpIrisClient extends IrisClient {
     xhr.setRequestHeader("Accept", "application/x-protobuf");
 
     _rejectWithError(IrisException exception) {
-      log.warning("Error (${exception.errorCode}) from remote service: ${exception.internalMessage}");
+      logIrisException(exception);
       completer.completeError(exception);
     }
 
     xhr.onLoad.listen((e) {
       // Note: file:// URIs have status of 0.
-      if (xhr.status >= 200 && xhr.status < 300 && !xhr.responseHeaders.containsKey(ERROR_CODE_RESPONSE_HEADER)) {
+      if (xhr.status >= 200 && xhr.status < 300) {
 
         completer.complete(getMessageFromBytes(expectedResponseType, xhr.response));
 
       } else {
-        int errorCode = IrisErrorCode.IRIS_COMMUNICATION_ERROR.value;
-        String message = UTF8.decode(xhr.response);
 
-        if (xhr.responseHeaders.containsKey(ERROR_CODE_RESPONSE_HEADER)) {
-          errorCode = xhr.responseHeaders[ERROR_CODE_RESPONSE_HEADER];
-        }
+        _rejectWithError(getIrisExceptionFromBytes(xhr.response));
 
-        _rejectWithError(new IrisException(errorCode, message));
       }
     });
 
     xhr.onError.listen((err) {
-      _rejectWithError(new IrisException(IrisErrorCode.IRIS_COMMUNICATION_ERROR.value, err.toString()));
+      _rejectWithError(new IrisException(IrisErrorCode.IRIS_COMMUNICATION_ERROR.value, "There was a problem communicating with the iris server."));
     });
 
     xhr.send(requestMessage == null ? null : requestMessage.writeToBuffer());

@@ -28,6 +28,9 @@ Future<bool> unauthFilter(MyContext context) {
   return new Future.value(false);
 }
 
+Future throwingFilter (MyContext context) {
+  throw new remote.ProcedureException(ErrorCode.FILTER_ERROR_CODE, "Filter error message");
+}
 
 class MyContext extends remote.Context {
 
@@ -94,6 +97,14 @@ class UserService extends remote.Service {
     return new Future.value();
   }
 
+  @annotation.Procedure()
+  Future throwsProcedureException(MyContext context) {
+    throw new remote.ProcedureException(ErrorCode.ERROR_CODE_TEST, "Test message");
+  }
+
+  @annotation.Procedure(filters: const[throwingFilter])
+  Future filterThrows(MyContext context) => new Future.value();
+
 
 }
 
@@ -129,11 +140,17 @@ class ClientUserService extends client_lib.Service {
 
   Future noMessages() => client.dispatch('/UserService.noMessages', null, null, false);
 
+  Future throwsProcedureException() => client.dispatch('/UserService.throwsProcedureException', null, null, false);
+
+  Future filterThrows() => client.dispatch('/UserService.filterThrows', null, null, false);
+
 }
 
 class ErrorCode extends IrisErrorCode {
 
   static const ERROR_CODE_TEST = const ErrorCode._(19);
+
+  static const FILTER_ERROR_CODE = const ErrorCode._(20);
 
   const ErrorCode._(int value) : super(value);
 }
@@ -224,6 +241,27 @@ main() {
           .then((_) {
         expect(_, isNull);
       });
+
+      expect(future, completes);
+    });
+    test("error codes get passed to the client properly", () {
+      var future = clientUserService.throwsProcedureException()
+          .then((_) => fail("Should never be reached"))
+          .catchError((client_lib.IrisException exc) {
+            expect(exc.errorCode, equals(ErrorCode.ERROR_CODE_TEST.value));
+          });
+
+
+      expect(future, completes);
+    });
+    test("when a filter throws a ProcedureException it gets passed to the client properly", () {
+      var future = clientUserService.filterThrows()
+          .then((_) => fail("Should never be reached"))
+          .catchError((client_lib.IrisException exc) {
+            expect(exc.errorCode, equals(ErrorCode.FILTER_ERROR_CODE.value));
+            expect(exc.internalMessage, equals("Filter error message"));
+          });
+
 
       expect(future, completes);
     });

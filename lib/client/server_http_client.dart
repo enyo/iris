@@ -3,8 +3,6 @@ library server_http_client;
 
 import "dart:io";
 import "dart:async";
-import "dart:convert";
-
 
 
 import "package:protobuf/protobuf.dart";
@@ -12,8 +10,11 @@ import "package:logging/logging.dart";
 
 
 import 'client.dart';
+
+/// So the [IrisException] is visible.
+export 'client.dart';
+
 import '../remote/error_code.dart';
-import '../src/consts.dart';
 
 
 Logger log = new Logger("IrisClient");
@@ -79,33 +80,29 @@ class HttpIrisClient extends IrisClient {
         // TODO: optimise by copying to a fixed size array with setRange
         List<int> bytes = bytesCollection.expand((x) => x).toList(growable: false);
 
-        if (response.statusCode < 200 || response.statusCode >= 400 || response.headers[ERROR_CODE_RESPONSE_HEADER] != null) {
-          log.warning("Response with status code ${response.statusCode} from server: ${UTF8.decode(bytes)}");
+        if (response.statusCode >= 200 && response.statusCode < 300) {
 
-          int errorCode = IrisErrorCode.IRIS_COMMUNICATION_ERROR.value;
-          String message = "";
+          return getMessageFromBytes(expectedResponseType, bytes);
 
-          try {
-            message = UTF8.decode(bytes);
-          }
-          catch (e) { }
+        }
+        else {
 
-          if (response.headers[ERROR_CODE_RESPONSE_HEADER] != null) {
-            errorCode = int.parse(response.headers[ERROR_CODE_RESPONSE_HEADER].first);
-          }
+          throw getIrisExceptionFromBytes(bytes);
 
-          throw new IrisException(errorCode, message);
         }
 
-        return getMessageFromBytes(expectedResponseType, bytes);
       })
       .catchError((error) {
+        IrisException exception;
         if (error is IrisException) {
           // Has already been handled
-          throw error;
+          exception = error;
         } else {
-          throw new IrisException(IrisErrorCode.IRIS_COMMUNICATION_ERROR.value, error.toString());
+          exception = new IrisException(IrisErrorCode.IRIS_COMMUNICATION_ERROR.value, error.toString());
         }
+        logIrisException(exception);
+
+        throw exception;
       });
 
   }
