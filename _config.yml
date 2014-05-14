@@ -1,4 +1,5 @@
 safe: false # A hack as environment variable (https://github.com/plusjade/jekyll-bootstrap/issues/84)
 permalink: none
 
+markdown: kramdown
 exclude: [ "CNAME" ]
