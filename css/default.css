@@ -237,6 +237,25 @@ ul, ol {
   ul li, ol li {
     margin: 1em 0; }
 
+header {
+  background: #70DAB6;
+  padding: 3em 0 2em;
+  text-align: center;
+  color: white;
+  margin-bottom: 2em; }
+  header h1 {
+    text-indent: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 268px;
+    height: 280px;
+    background: url("../images/iris-logo.png");
+    margin: 0 auto; }
+    @media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min--moz-device-pixel-ratio: 2), only screen and (-o-min-device-pixel-ratio: 2 / 1), only screen and (min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi), only screen and (min-resolution: 2dppx) {
+      header h1 {
+        background: url("../images/iris-logo@2x.png") no-repeat top left;
+        background-size: 268px 280px; } }
+
 #container {
   max-width: 800px;
   margin: 0 auto;

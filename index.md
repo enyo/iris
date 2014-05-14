@@ -2,15 +2,13 @@
 layout: default
 ---
 
-# Remote Services
-
-> The remote services library is a complete abstraction of client ↔ server
+> Iris is a complete abstraction of client ↔ server
 > communication.  
 > It is basically a
 > [remote procedure call](http://en.wikipedia.org/wiki/Remote_procedure_call)
 > implementation in *dart*.
 
-[Hosted on GitHub](https://github.com/enyo/remote-services)
+[Hosted on GitHub](https://github.com/enyo/iris)
 
 ## Introduction
 
@@ -34,7 +32,7 @@ There are multiple things wrong with this approach:
 3. *Every client and server* needs to implement the communication (writing the AJAX call,
     handling errors, etc...).
 
-> The *Remote Services library* solves all those problems.
+> *Iris* solves all those problems.
 
 
 ## Dart
@@ -61,17 +59,17 @@ stable workflow.
 ## Protocol buffers
 
 Instead of using JSON, which is basically just a Map without any type or
-structure information whatsoever, the *remote services* library uses
+structure information whatsoever, *iris* uses
 [protocol buffers](http://en.wikipedia.org/wiki/Protocol_Buffers).
 
 Whenever you define a procedure, you specify what protocol buffer message you
-are sending back, and which one you want to receive. The *remote services library*
+are sending back, and which one you want to receive. *Iris*
 automatically checks the type, makes sure that the message is well formatted, and
 gives you a *dart* object of the proper type.
 
 ## Communication
 
-All communication is handled by the *remote services library*. You don't ever
+All communication is handled by *iris*. You don't ever
 need to think about how the data is being transferred. All you need to think
 about is: what message do I send to the remote service, and what message do I
 want to get back.
@@ -79,7 +77,7 @@ want to get back.
 
 ## Error handling
 
-The *remote services library* completely takes care of error handling for you.
+*Iris* completely takes care of error handling for you.
 
 Errors are sent using error codes that you define on your server. All clients
 get access to that error codes and can handle errors appropriately.
@@ -103,4 +101,4 @@ As you can see, it contains the generated path for the resources, and the reques
 as well as the return types for requests.
 
 For a complete explanation and reference, please see the
-[remote services README](https://github.com/enyo/remote-services/blob/master/README.md).
+[iris README](https://github.com/enyo/iris/blob/master/README.md).
