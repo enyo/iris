@@ -1,8 +1,8 @@
-name: remote_services
+name: iris
 description: A complete abstraction of client <-> server communication
 author: Matias Meno <m@tias.me>
-version: 0.2.2
-homepage: https://github.com/enyo/remote-services
+version: 0.2.3
+homepage: https://enyo.github.io/iris
 dependencies:
   logging: ">=0.9.1+1 <0.10.0"
   annotation_crawler: ">=0.1.0 <0.2.0"
