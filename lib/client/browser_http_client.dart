@@ -15,14 +15,14 @@ import 'client.dart';
 import '../remote/error_code.dart';
 import '../src/consts.dart';
 
-Logger log = new Logger("RemoteServiceClient");
+Logger log = new Logger("IrisClient");
 
 
 
 /**
- * The RemoteService Client that communicates to the server from the browser.
+ * The Iris Client that communicates to the server from the browser.
  */
-class HttpServiceClient extends ServiceClient {
+class HttpIrisClient extends IrisClient {
 
 
   /// The base URI for all requests.
@@ -30,7 +30,7 @@ class HttpServiceClient extends ServiceClient {
 
   final bool withCredentials;
 
-  HttpServiceClient(this.baseUri, {this.withCredentials: true});
+  HttpIrisClient(this.baseUri, {this.withCredentials: true});
 
 
   /**
@@ -47,7 +47,7 @@ class HttpServiceClient extends ServiceClient {
    * handling the responses.
    *
    * If the Future results in an error you can be sure to get a
-   * [ServiceClientException] error.
+   * [IrisException] error.
    *
    * You should never invoke this method directly but use [dispatch].
    */
@@ -68,7 +68,7 @@ class HttpServiceClient extends ServiceClient {
 
     xhr.setRequestHeader("Accept", "application/x-protobuf");
 
-    _rejectWithError(ServiceClientException exception) {
+    _rejectWithError(IrisException exception) {
       log.warning("Error (${exception.errorCode}) from remote service: ${exception.internalMessage}");
       completer.completeError(exception);
     }
@@ -80,19 +80,19 @@ class HttpServiceClient extends ServiceClient {
         completer.complete(getMessageFromBytes(expectedResponseType, xhr.response));
 
       } else {
-        int errorCode = RemoteServicesErrorCode.RS_COMMUNICATION_ERROR.value;
+        int errorCode = IrisErrorCode.IRIS_COMMUNICATION_ERROR.value;
         String message = UTF8.decode(xhr.response);
 
         if (xhr.responseHeaders.containsKey(ERROR_CODE_RESPONSE_HEADER)) {
           errorCode = xhr.responseHeaders[ERROR_CODE_RESPONSE_HEADER];
         }
 
-        _rejectWithError(new ServiceClientException(errorCode, message));
+        _rejectWithError(new IrisException(errorCode, message));
       }
     });
 
     xhr.onError.listen((err) {
-      _rejectWithError(new ServiceClientException(RemoteServicesErrorCode.RS_COMMUNICATION_ERROR.value, err.toString()));
+      _rejectWithError(new IrisException(IrisErrorCode.IRIS_COMMUNICATION_ERROR.value, err.toString()));
     });
 
     xhr.send(requestMessage == null ? null : requestMessage.writeToBuffer());

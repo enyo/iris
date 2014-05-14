@@ -8,7 +8,7 @@ import "../lib/builder/builder.dart";
 import "../lib/remote/error_code.dart";
 
 
-class ErrorCode extends RemoteServicesErrorCode {
+class ErrorCode extends IrisErrorCode {
 
 
   static const INVALID_EMAIL = const ErrorCode(1);
@@ -20,7 +20,7 @@ class ErrorCode extends RemoteServicesErrorCode {
 
 }
 
-class InvalidCode1 extends RemoteServicesErrorCode {
+class InvalidCode1 extends IrisErrorCode {
 
   static const INVALID_EMAIL = const ErrorCode(1);
 
@@ -31,16 +31,16 @@ class InvalidCode1 extends RemoteServicesErrorCode {
 
 }
 
-class InvalidCode2 extends RemoteServicesErrorCode {
+class InvalidCode2 extends IrisErrorCode {
 
-  static const RS_BLABLA = const ErrorCode(1);
+  static const IRIS_BLABLA = const ErrorCode(1);
 
 
   const InvalidCode2(value) : super(value);
 
 }
 
-class InvalidCode3 extends RemoteServicesErrorCode {
+class InvalidCode3 extends IrisErrorCode {
 
   static const INVALID_EMAIL = const ErrorCode(955);
 
@@ -85,8 +85,8 @@ main() {
 
         expect(codes["INVALID_EMAIL"], equals(1));
         expect(codes["INVALID_USERNAME"], equals(2));
-        expect(codes["RS_PROCEDURE_NOT_FOUND"], equals(RemoteServicesErrorCode.RS_PROCEDURE_NOT_FOUND.value));
-        expect(codes["RS_INTERNAL_SERVER_ERROR"], equals(RemoteServicesErrorCode.RS_INTERNAL_SERVER_ERROR.value));
+        expect(codes["IRIS_PROCEDURE_NOT_FOUND"], equals(IrisErrorCode.IRIS_PROCEDURE_NOT_FOUND.value));
+        expect(codes["IRIS_INTERNAL_SERVER_ERROR"], equals(IrisErrorCode.IRIS_INTERNAL_SERVER_ERROR.value));
 
       });
     });

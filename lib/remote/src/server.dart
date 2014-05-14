@@ -1,15 +1,15 @@
-part of remote_services;
+part of iris;
 
 
 
 
 /**
- * A class instantiated by the [ServiceServer] whenever a request is made
+ * A class instantiated by the [IrisServer] whenever a request is made
  * either by HTTP, Socket or Websocket.
  *
  * You can access it with [Context.request].
  */
-class ServiceRequest {
+class IrisRequest {
 
 
   /// This attribute **always** returns an empty list for Socket connections
@@ -25,9 +25,9 @@ class ServiceRequest {
 
   final HttpRequest _httpRequest;
 
-  ServiceRequest.fromHttp(this._httpRequest);
+  IrisRequest.fromHttp(this._httpRequest);
 
-  ServiceRequest.fromSocket() : _httpRequest = null;
+  IrisRequest.fromSocket() : _httpRequest = null;
 
 
   /**
@@ -51,7 +51,7 @@ class ServiceRequest {
 /**
  * The base class for servers.
  */
-abstract class ServiceServer {
+abstract class IrisServer {
 
   List<ServiceProcedure> _procedures;
 
@@ -74,7 +74,7 @@ abstract class ServiceServer {
       return message;
     }
     catch (err) {
-      throw new _ErrorCodeException(RemoteServicesErrorCode.RS_INVALID_PB_MESSAGE_RECEIVED_BY_SERVICE, err.toString());
+      throw new _ErrorCodeException(IrisErrorCode.IRIS_INVALID_PB_MESSAGE_RECEIVED_BY_SERVICE, err.toString());
     }
   }
 
@@ -85,7 +85,7 @@ abstract class ServiceServer {
 /**
  * The HttpServiceServer exposes all procedures via Http.
  */
-class HttpServiceServer extends ServiceServer {
+class HttpIrisServer extends IrisServer {
 
 
   final dynamic address;
@@ -99,7 +99,7 @@ class HttpServiceServer extends ServiceServer {
   HttpServer _server;
 
 
-  HttpServiceServer(this.address, this.port, {this.allowOrigin});
+  HttpIrisServer(this.address, this.port, {this.allowOrigin});
 
   /**
    * Starts an HTTP server that listens for POST requests for all specified
@@ -139,7 +139,7 @@ class HttpServiceServer extends ServiceServer {
     GeneratedMessage requestMessage;
     Context context;
 
-    var serviceRequest = new ServiceRequest.fromHttp(req);
+    var serviceRequest = new IrisRequest.fromHttp(req);
 
     Future reqMsgFuture;
 
@@ -179,7 +179,7 @@ class HttpServiceServer extends ServiceServer {
         .then((responseMessage) => _send(req, procedure.responseType == null ? [] : responseMessage.writeToBuffer()))
         .catchError((err) {
 
-          RemoteServicesErrorCode errorCode = RemoteServicesErrorCode.RS_INTERNAL_SERVER_ERROR;
+          IrisErrorCode errorCode = IrisErrorCode.IRIS_INTERNAL_SERVER_ERROR;
           String errorMessage = err.toString();
 
           if (err is _ErrorCodeException || err is ProcedureException) {
@@ -187,7 +187,7 @@ class HttpServiceServer extends ServiceServer {
             errorMessage = err.message;
           }
           else if (err is FilterException) {
-            errorCode = RemoteServicesErrorCode.RS_REJECTED_BY_FILTER;
+            errorCode = IrisErrorCode.IRIS_REJECTED_BY_FILTER;
             errorMessage = "The filter '${err.filterName}' rejected the request.";
           }
 
@@ -199,13 +199,13 @@ class HttpServiceServer extends ServiceServer {
   serveNotFound(HttpRequest req) {
     log.finest("Sending 404 for procedure: ${req.uri.path}");
 
-    _send(req, UTF8.encode("The requested procedure was not found."), RemoteServicesErrorCode.RS_PROCEDURE_NOT_FOUND);
+    _send(req, UTF8.encode("The requested procedure was not found."), IrisErrorCode.IRIS_PROCEDURE_NOT_FOUND);
 
     return req.response.close();
   }
 
 
-  _send(HttpRequest req, List<int> body, [RemoteServicesErrorCode errorCode]) {
+  _send(HttpRequest req, List<int> body, [IrisErrorCode errorCode]) {
     int statusCode = HttpStatus.OK;
 
     if (allowOrigin != null) {
@@ -216,7 +216,7 @@ class HttpServiceServer extends ServiceServer {
     }
 
     if (errorCode != null) {
-      if (errorCode == RemoteServicesErrorCode.RS_PROCEDURE_NOT_FOUND) {
+      if (errorCode == IrisErrorCode.IRIS_PROCEDURE_NOT_FOUND) {
         statusCode = HttpStatus.NOT_FOUND;
       }
       else {

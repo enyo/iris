@@ -6,7 +6,7 @@ import "package:logging/logging.dart";
 
 import "package:path/path.dart" as path;
 
-import '../remote/remote_services.dart';
+import '../remote/iris.dart';
 
 import '../remote/error_code.dart';
 
@@ -70,7 +70,7 @@ class BuilderException implements Exception {
  * If [args] are provided, then it will be looked for "--changed" and "--removed"
  * arguments, and the build will only be done dependent on that information.
  */
-Future build(ServiceDefinitions serviceDefinitions, String targetDirectory, String pbMessagesManifest, {List<String> args, bool includePbMessages: false, String servicesFileName: "services.dart", String servicesDirectory, Type errorCodes}) {
+Future build(Iris serviceDefinitions, String targetDirectory, String pbMessagesManifest, {List<String> args, bool includePbMessages: false, String servicesFileName: "services.dart", String servicesDirectory, Type errorCodes}) {
 
   var doBuild = false;
 

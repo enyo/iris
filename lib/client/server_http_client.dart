@@ -16,20 +16,20 @@ import '../remote/error_code.dart';
 import '../src/consts.dart';
 
 
-Logger log = new Logger("RemoteServiceClient");
+Logger log = new Logger("IrisClient");
 
 
 
 /**
- * The RemoteService Client that communicates to the server from the browser.
+ * The Iris Client that communicates to the server from the browser.
  */
-class HttpServiceClient extends ServiceClient {
+class HttpIrisClient extends IrisClient {
 
 
   /// The base URI for all requests.
   final Uri baseUri;
 
-  HttpServiceClient(this.baseUri);
+  HttpIrisClient(this.baseUri);
 
 
   /**
@@ -43,7 +43,7 @@ class HttpServiceClient extends ServiceClient {
 
   /**
    * If the Future results in an error you can be sure to get a
-   * [ServiceClientException] error.
+   * [IrisException] error.
    *
    * You should never invoke this method directly but use [dispatch].
    */
@@ -82,7 +82,7 @@ class HttpServiceClient extends ServiceClient {
         if (response.statusCode < 200 || response.statusCode >= 400 || response.headers[ERROR_CODE_RESPONSE_HEADER] != null) {
           log.warning("Response with status code ${response.statusCode} from server: ${UTF8.decode(bytes)}");
 
-          int errorCode = RemoteServicesErrorCode.RS_COMMUNICATION_ERROR.value;
+          int errorCode = IrisErrorCode.IRIS_COMMUNICATION_ERROR.value;
           String message = "";
 
           try {
@@ -94,17 +94,17 @@ class HttpServiceClient extends ServiceClient {
             errorCode = int.parse(response.headers[ERROR_CODE_RESPONSE_HEADER].first);
           }
 
-          throw new ServiceClientException(errorCode, message);
+          throw new IrisException(errorCode, message);
         }
 
         return getMessageFromBytes(expectedResponseType, bytes);
       })
       .catchError((error) {
-        if (error is ServiceClientException) {
+        if (error is IrisException) {
           // Has already been handled
           throw error;
         } else {
-          throw new ServiceClientException(RemoteServicesErrorCode.RS_COMMUNICATION_ERROR.value, error.toString());
+          throw new IrisException(IrisErrorCode.IRIS_COMMUNICATION_ERROR.value, error.toString());
         }
       });
 

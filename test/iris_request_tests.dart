@@ -1,18 +1,18 @@
-library remote_service_request_tests;
+library iris_request_tests;
 
 import "dart:io";
 
 import "package:unittest/unittest.dart";
 import "package:mock/mock.dart";
 
-import "../lib/remote/remote_services.dart";
+import "../lib/remote/iris.dart";
 
 
 main() {
 
-  group("RemoteServiceRequest", () {
+  group("IrisRequest", () {
     test(".cookies returns empty Array if it's a socket connection", () {
-      var rsr = new ServiceRequest.fromSocket();
+      var rsr = new IrisRequest.fromSocket();
       expect(rsr.cookies, equals([]));
     });
     test(".cookies returns the cookies from HttpRequest if it's a HTTP request", () {
@@ -22,7 +22,7 @@ main() {
         cookie2 = new Cookie("name2", "value2");
 
       httpReq.when(callsTo("get cookies")).alwaysReturn([ cookie1, cookie2 ]);
-      var rsr = new ServiceRequest.fromHttp(httpReq);
+      var rsr = new IrisRequest.fromHttp(httpReq);
       expect(rsr.cookies, equals([ cookie1, cookie2 ]));
     });
   });

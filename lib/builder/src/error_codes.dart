@@ -14,7 +14,7 @@ class CompiledErrorCodes {
 
   CompiledErrorCodes(this.targetDirectory, this.errorCodes) {
     reflectedCodes = reflectType(errorCodes);
-    if (!reflectedCodes.isSubtypeOf(reflectClass(RemoteServicesErrorCode))) {
+    if (!reflectedCodes.isSubtypeOf(reflectClass(IrisErrorCode))) {
       throw new BuilderException("Your ErrorCode class needs to implement the RemoteServicesErrorCode class. Please look at its documentation.");
     }
   }
@@ -56,7 +56,7 @@ class ErrorCode {
     Map<String, int> codes = {};
 
 
-    var reflectedRSErrorCode = reflectClass(RemoteServicesErrorCode);
+    var reflectedRSErrorCode = reflectClass(IrisErrorCode);
 
     _filterCodeAttributes(reflectedRSErrorCode).forEach((k, v) {
       var keyName = MirrorSystem.getName(k);
@@ -72,7 +72,7 @@ class ErrorCode {
       var keyName = MirrorSystem.getName(k);
       int codeNum = reflectedCodes.getField(k).reflectee.value;
 
-      if (keyName.startsWith("RS_")) throw new BuilderException("You can't define code names starting with 'RS_' ($keyName).");
+      if (keyName.startsWith("IRIS_")) throw new BuilderException("You can't define code names starting with 'IRIS_' ($keyName).");
       if (codes.containsKey(keyName)) throw new BuilderException("The code $keyName is already defined.");
       if (codes.values.contains(codeNum)) throw new BuilderException("You can't use the same code twice.");
       if (codeNum >= 900 && codeNum < 1000) throw new BuilderException("The code range 900...999 is reserved for internal use.");

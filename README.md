@@ -127,7 +127,7 @@ ServiceDefinitions getServices() {
         ..addService(new UserService())
         ..addService(new AuthenticationService())
         // Add the servers you want to use
-        ..addServer(new HttpServiceServer("localhost", 8088, allowOrigin: "http://127.0.0.1:3030"));
+        ..addServer(new HttpIrisServer("localhost", 8088, allowOrigin: "http://127.0.0.1:3030"));
 }
 ```
 
@@ -202,7 +202,7 @@ import "package:iris/client/browser_http_client.dart";
 import "package:my-generated-lib/services.dart";
 
 main() {
-  var client = new HttpServiceClient(Uri.parse("http://localhost:8088"));
+  var client = new HttpIrisClient(Uri.parse("http://localhost:8088"));
 
   // Create an instance of your services
   var services = new Services(client);
@@ -285,7 +285,7 @@ well. Look at the `IrisErrorCode` class to see what they are.
 Every *procedure* and *procedure filter* receives a `Context` object that gets
 instantiated for every request. If you don't define a `ContextInitializer`
 yourself, you will always receive the default `Context` implementation, which
-only holds the `ServiceRequest` object.
+only holds the `IrisRequest` object.
 
 If you want to have additional information in you context (like session data),
 you can define your own context class and provide a `ContextInitializer` to
@@ -298,7 +298,7 @@ create that object for you.
 This is the `typedef` for `ContextInitializer`s:
 
 ```dart
-typedef Future<Context> ContextInitializer(ServiceRequest req);
+typedef Future<Context> ContextInitializer(IrisRequest req);
 ```
 
 and here an example implementation:
@@ -312,13 +312,13 @@ class MyContext extends Context {
   /// An additional field in your context to hold the session information.
   final Session session;
 
-  MyContext(ServiceRequest req, this.session) : super(req);
+  MyContext(IrisRequest req, this.session) : super(req);
 }
 
 /**
  * Now define your context initializer
  */
-Future<MyContext> myContextInitializer(ServiceRequest req) {
+Future<MyContext> myContextInitializer(IrisRequest req) {
   // This can do anything needed for context initialization. Example:
 
   // Load session info from the memory cache

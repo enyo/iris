@@ -9,7 +9,7 @@ import "../remote/error_code.dart";
 /**
  * Whenever an error occurs, this is the exception you get out of it.
  */
-class ServiceClientException implements Exception {
+class IrisException implements Exception {
 
   /// The error code received by the server.
   final int errorCode;
@@ -18,7 +18,7 @@ class ServiceClientException implements Exception {
   /// user
   final String internalMessage;
 
-  ServiceClientException(this.errorCode, [this.internalMessage]);
+  IrisException(this.errorCode, [this.internalMessage]);
 
 
   String toString() => "ServiceClientException with error code ${errorCode}." + internalMessage == null ? "" : " Error: " + internalMessage;
@@ -29,7 +29,7 @@ class ServiceClientException implements Exception {
 /**
  * The base class for clients.
  */
-abstract class ServiceClient {
+abstract class IrisClient {
 
 
   /**
@@ -38,14 +38,14 @@ abstract class ServiceClient {
   Future<GeneratedMessage> dispatch(String path, GeneratedMessage requestMessage, Type expectedResponseType, [requiredRequestMessage = true]) {
     if (requiredRequestMessage) {
       if (requestMessage == null) {
-        throw new ServiceClientException(RemoteServicesErrorCode.RS_REQUIRED_PB_MESSAGE_NOT_PROVIDED.value);
+        throw new IrisException(IrisErrorCode.IRIS_REQUIRED_PB_MESSAGE_NOT_PROVIDED.value);
       }
       requestMessage.check();
     }
     return query(path, requestMessage, expectedResponseType)
         .then((GeneratedMessage responseMessage) {
           if (expectedResponseType != null && responseMessage == null) {
-            throw new ServiceClientException(RemoteServicesErrorCode.RS_REQUIRED_PB_MESSAGE_NOT_PROVIDED.value);
+            throw new IrisException(IrisErrorCode.IRIS_REQUIRED_PB_MESSAGE_NOT_PROVIDED.value);
           }
           return responseMessage;
         });
@@ -77,8 +77,8 @@ abstract class ServiceClient {
  */
 abstract class Service {
 
-  ServiceClient client;
+  IrisClient client;
 
-  Service(ServiceClient this.client);
+  Service(IrisClient this.client);
 
 }

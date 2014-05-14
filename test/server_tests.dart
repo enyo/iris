@@ -7,7 +7,7 @@ import "package:mock/mock.dart";
 
 import "package:protobuf/protobuf.dart";
 
-import "../lib/remote/remote_services.dart";
+import "../lib/remote/iris.dart";
 import "../lib/remote/annotations.dart" as anno;
 
 
@@ -17,7 +17,7 @@ class TestResponse implements GeneratedMessage { }
 class TestContext implements Context { }
 
 
-class TestServer extends Mock implements ServiceServer {
+class TestServer extends Mock implements IrisServer {
 
 }
 

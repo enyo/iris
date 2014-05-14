@@ -1,4 +1,4 @@
-part of remote_services;
+part of iris;
 
 
 /**
@@ -58,7 +58,7 @@ class InvalidServiceDeclaration extends RemoteServicesException {
 class _ErrorCodeException extends RemoteServicesException {
 
 
-  final RemoteServicesErrorCode errorCode;
+  final IrisErrorCode errorCode;
 
 
   /**
@@ -77,7 +77,7 @@ class _ErrorCodeException extends RemoteServicesException {
  */
 class ProcedureException extends RemoteServicesException {
 
-  final RemoteServicesErrorCode errorCode;
+  final IrisErrorCode errorCode;
 
 
   /**

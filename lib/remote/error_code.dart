@@ -1,9 +1,9 @@
-library remote_services_error_code;
+library iris_error_code;
 
 /**
  * Use this as base class for your error codes. Eg.:
  *
- *     class ErrorCode extends RemoteServicesErrorCode {
+ *     class ErrorCode extends IrisErrorCode {
  *
  *       static const INVALID_USERNAME_OR_PASSWORD = const ErrorCode._(0);
  *
@@ -17,40 +17,40 @@ library remote_services_error_code;
  * trying to use them.
  *
  */
-abstract class RemoteServicesErrorCode {
+abstract class IrisErrorCode {
 
   final int value;
 
   /// Unable to communicate with the remote service.
-  static const RS_COMMUNICATION_ERROR = const _InternalErrorCode._(900);
+  static const IRIS_COMMUNICATION_ERROR = const _InternalErrorCode._(900);
 
   /// Whenever an attempt to call a procedure that doesn't exist is made.
-  static const RS_PROCEDURE_NOT_FOUND = const _InternalErrorCode._(901);
+  static const IRIS_PROCEDURE_NOT_FOUND = const _InternalErrorCode._(901);
 
   /// Whenever an error on the server occured that wasn't recoverable.
-  static const RS_INTERNAL_SERVER_ERROR = const _InternalErrorCode._(902);
+  static const IRIS_INTERNAL_SERVER_ERROR = const _InternalErrorCode._(902);
 
 
 
   /// When the service received an invalid protocol buffer message
-  static const RS_INVALID_PB_MESSAGE_RECEIVED_BY_SERVICE = const _InternalErrorCode._(910);
+  static const IRIS_INVALID_PB_MESSAGE_RECEIVED_BY_SERVICE = const _InternalErrorCode._(910);
 
   /// When the client received an invalid protocol buffer message
-  static const RS_INVALID_PB_MESSAGE_RECEIVED_BY_CLIENT = const _InternalErrorCode._(911);
+  static const IRIS_INVALID_PB_MESSAGE_RECEIVED_BY_CLIENT = const _InternalErrorCode._(911);
 
   /// When a required protocol buffer message was either not sent or received
-  static const RS_REQUIRED_PB_MESSAGE_NOT_PROVIDED = const _InternalErrorCode._(912);
+  static const IRIS_REQUIRED_PB_MESSAGE_NOT_PROVIDED = const _InternalErrorCode._(912);
 
 
   /// When a filter rejected the request
-  static const RS_REJECTED_BY_FILTER = const _InternalErrorCode._(920);
+  static const IRIS_REJECTED_BY_FILTER = const _InternalErrorCode._(920);
 
 
 
-  const RemoteServicesErrorCode(this.value);
+  const IrisErrorCode(this.value);
 
 }
-class _InternalErrorCode extends RemoteServicesErrorCode {
+class _InternalErrorCode extends IrisErrorCode {
   const _InternalErrorCode._(int value) : super(value);
 }
 

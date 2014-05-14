@@ -1,4 +1,4 @@
-library service_definitions_tests;
+library iris_tests;
 
 import "dart:io";
 
@@ -7,7 +7,7 @@ import "package:mock/mock.dart";
 
 import "package:protobuf/protobuf.dart";
 
-import "../lib/remote/remote_services.dart";
+import "../lib/remote/iris.dart";
 import "../lib/remote/annotations.dart" as anno;
 
 
@@ -17,7 +17,7 @@ class TestResponse implements GeneratedMessage { }
 class TestContext implements Context { }
 
 
-class TestServer extends Mock implements ServiceServer {
+class TestServer extends Mock implements IrisServer {
 
 }
 
@@ -71,25 +71,25 @@ class WrongParamsRouteService extends Service {
 
 main() {
 
-  group("ServiceDefinitions", () {
+  group("Iris", () {
     test("addService() should throw InvalidServiceDefinition if return type is no Future<GeneratedMessage>", () {
-      var services = new ServiceDefinitions();
+      var services = new Iris();
       expect(() => services.addService(new NoGeneratedMessageRouteService()), throws);
     });
 
     test("addService() should throw InvalidServiceDefinition if accepted params are not Context and GeneratedMessage", () {
-      var services = new ServiceDefinitions();
+      var services = new Iris();
       expect(() => services.addService(new WrongParamsRouteService()), throws);
     });
 
     test("addService() properly detects all procedures", () {
-      var services = new ServiceDefinitions();
+      var services = new Iris();
       services.addService(new TestService());
       services.procedures.first.invoke(new TestContext(), new TestRequest());
     });
 
     test("addService() finds all filters on procedures", () {
-      var services = new ServiceDefinitions();
+      var services = new Iris();
       services.addService(new TestService());
       expect(services.procedures.length, equals(2));
       expect(services.procedures.last.filterFunctions.length, equals(2));
@@ -98,7 +98,7 @@ main() {
     });
 
     test("addService() finds all filters on service and procedures and combines them", () {
-      var services = new ServiceDefinitions();
+      var services = new Iris();
       services.addService(new ServiceWithFilters());
       expect(services.procedures.length, equals(2));
 
@@ -110,20 +110,20 @@ main() {
     });
 
     test("addService() throws if a server has already been set", () {
-      var services = new ServiceDefinitions();
+      var services = new Iris();
       services.addService(new TestService());
       services.addServer(new TestServer());
       expect(() => services.addService(new TestService()), throws);
     });
 
     test("addServer() throws if no procedure has been added yet", (){
-      var services = new ServiceDefinitions();
+      var services = new Iris();
       expect(() => services.addServer(new TestServer()), throws);
     });
 
 
     test("start() calls start() on all servers and resolves Future when all are done", () {
-      var services = new ServiceDefinitions();
+      var services = new Iris();
       services.addService(new TestService());
 
       var server1 = new TestServer();

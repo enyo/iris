@@ -9,7 +9,7 @@ import "package:unittest/unittest.dart";
 import "package:iris/client/client.dart" as client_lib;
 import "package:iris/client/server_http_client.dart";
 
-import "package:iris/remote/remote_services.dart" as remote;
+import "package:iris/remote/iris.dart" as remote;
 import "package:iris/remote/error_code.dart";
 import "package:iris/remote/annotations.dart" as annotation;
 
@@ -97,21 +97,21 @@ class UserService extends remote.Service {
 
 }
 
-Future<MyContext> contextInitializer(remote.ServiceRequest req) {
+Future<MyContext> contextInitializer(remote.IrisRequest req) {
   var context = new MyContext(req);
 
   return new Future.value(context);
 }
 
-remote.ServiceDefinitions getServices() {
-  return new remote.ServiceDefinitions(contextInitializer)
+remote.Iris getServices() {
+  return new remote.Iris(contextInitializer)
         ..addService(new UserService())
-        ..addServer(new remote.HttpServiceServer("localhost", PORT, allowOrigin: "http://127.0.0.1:3030"));
+        ..addServer(new remote.HttpIrisServer("localhost", PORT, allowOrigin: "http://127.0.0.1:3030"));
 }
 
 class ClientUserService extends client_lib.Service {
 
-  ClientUserService(client_lib.ServiceClient client) : super(client);
+  ClientUserService(client_lib.IrisClient client) : super(client);
 
   Future<User> search(UserSearch requestMessage) => client.dispatch('/UserService.search', requestMessage, User);
 
@@ -131,7 +131,7 @@ class ClientUserService extends client_lib.Service {
 
 }
 
-class ErrorCode extends RemoteServicesErrorCode {
+class ErrorCode extends IrisErrorCode {
 
   static const ERROR_CODE_TEST = const ErrorCode._(19);
 
@@ -143,7 +143,7 @@ main() {
 
   var services = getServices();
 
-  var client = new HttpServiceClient(Uri.parse("http://localhost:$PORT"));
+  var client = new HttpIrisClient(Uri.parse("http://localhost:$PORT"));
   var clientUserService = new ClientUserService(client);
 
 
@@ -159,8 +159,8 @@ main() {
     test("methods without the Procedure annotation get ignored", () {
       var future = clientUserService.notAnnotated(new UserSearch()..name = "TEST")
           .then((_) => fail("Shouldn't be reached"))
-          .catchError((client_lib.ServiceClientException excp) {
-            expect(excp.errorCode, equals(RemoteServicesErrorCode.RS_PROCEDURE_NOT_FOUND.value));
+          .catchError((client_lib.IrisException excp) {
+            expect(excp.errorCode, equals(IrisErrorCode.IRIS_PROCEDURE_NOT_FOUND.value));
           });
 
       expect(future, completes);
@@ -175,8 +175,8 @@ main() {
     test("filters work properly", () {
       var future = clientUserService.unauthorized(new UserSearch()..name = "TEST")
           .then((_) => fail("Shouldn't be reached"))
-          .catchError((client_lib.ServiceClientException excp) {
-            expect(excp.errorCode, equals(RemoteServicesErrorCode.RS_REJECTED_BY_FILTER.value));
+          .catchError((client_lib.IrisException excp) {
+            expect(excp.errorCode, equals(IrisErrorCode.IRIS_REJECTED_BY_FILTER.value));
             expect(excp.internalMessage, equals("The filter 'unauthFilter' rejected the request."));
           });
 
@@ -185,7 +185,7 @@ main() {
     test("ProcedureExceptions get transmitted properly", () {
       var future = clientUserService.throws(new UserSearch()..name = "TEST")
           .then((_) => fail("Shouldn't be reached"))
-          .catchError((client_lib.ServiceClientException excp) {
+          .catchError((client_lib.IrisException excp) {
             expect(excp.errorCode, equals(ErrorCode.ERROR_CODE_TEST.value));
             expect(excp.internalMessage, equals("Oh noes."));
           });
@@ -195,8 +195,8 @@ main() {
     test("random exceptions get sanitized properly", () {
       var future = clientUserService.throwsRandomException()
           .then((_) => fail("Shouldn't be reached"))
-          .catchError((client_lib.ServiceClientException excp) {
-            expect(excp.errorCode, equals(RemoteServicesErrorCode.RS_INTERNAL_SERVER_ERROR.value));
+          .catchError((client_lib.IrisException excp) {
+            expect(excp.errorCode, equals(IrisErrorCode.IRIS_INTERNAL_SERVER_ERROR.value));
             expect(excp.internalMessage, equals("Exception: Oups, something went through."));
           });
 

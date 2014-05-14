@@ -1,4 +1,4 @@
-part of remote_services;
+part of iris;
 
 /**
  * The signature of a procedure in a [Service].

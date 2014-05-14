@@ -1,4 +1,4 @@
-library remote_services;
+library iris;
 
 import "dart:io";
 export "dart:async";
@@ -40,7 +40,7 @@ Logger log = new Logger("RemoteServices");
  */
 class Context {
 
-   final ServiceRequest request;
+   final IrisRequest request;
 
    Context(this.request);
 }
@@ -55,7 +55,7 @@ typedef Future<bool> FilterFunction(Context context);
 /**
  * The type of context initializer functions
  */
-typedef Future<Context> ContextInitializer(ServiceRequest req);
+typedef Future<Context> ContextInitializer(IrisRequest req);
 
 
 
@@ -109,27 +109,26 @@ class ServiceProcedure {
 
 
 /**
- * The base class for the remote_service server. This is your starting point for
- * a remote services server.
+ * This is your starting point for an iris server.
  */
-class ServiceDefinitions {
+class Iris {
 
   final ContextInitializer _contextInitializer;
 
   ContextInitializer get contextInitializer => _contextInitializer == null ? _defaultContextInitializer : _contextInitializer;
 
-  RemoteServicesErrorCode errorCodes;
+  IrisErrorCode errorCodes;
 
-  ServiceDefinitions([this._contextInitializer]);
+  Iris([this._contextInitializer]);
 
-  Future<Context> _defaultContextInitializer(ServiceRequest req) => new Future.value(new Context(req));
+  Future<Context> _defaultContextInitializer(IrisRequest req) => new Future.value(new Context(req));
 
 
   /// The list of all [ServiceProcedure]s available.
   List<ServiceProcedure> procedures = [];
 
   /// The list of all servers configured for those services.
-  List<ServiceServer> servers = [];
+  List<IrisServer> servers = [];
 
   /**
    * Checks the service, and creates a list of [ServiceProcedure]s for every
@@ -201,7 +200,7 @@ class ServiceDefinitions {
   /**
    * Sets all procedures on the server and adds it to the list.
    */
-  addServer(ServiceServer server) {
+  addServer(IrisServer server) {
     if (procedures.isEmpty) throw new RemoteServicesException._("You tried to add a server but no procedures have been added yet.");
 
     server._procedures = procedures;

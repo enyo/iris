@@ -1,8 +1,8 @@
 
 import 'package:logging/logging.dart';
 
-import "remote_service_request_tests.dart" as requestTests;
-import "service_definitions_tests.dart" as serviceDefinitionsTests;
+import "iris_request_tests.dart" as requestTests;
+import "iris_tests.dart" as serviceDefinitionsTests;
 import "server_tests.dart" as serverTests;
 import "builder_tests.dart" as builderTests;
 import "filter_tests.dart" as filterTests;
