@@ -43,12 +43,12 @@ class CompiledService {
 library generated_${lowerCaseServiceName};
 
 import "dart:async";
-import "package:remote_services/client/client.dart";
+import "package:iris/client/client.dart";
 import "${relativePathToPbManifest}";
 
 class $serviceName extends Service {
 
-  $serviceName(ServiceClient client) : super(client);
+  $serviceName(IrisClient client) : super(client);
 
 """;
 

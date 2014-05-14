@@ -93,9 +93,9 @@ class CompiledManifest {
   String get compiledString {
     var compiledString = "$generatedNotice";
 
-    compiledString += """library remote_services_manifest;
+    compiledString += """library iris_manifest;
 
-import "package:remote_services/client/client.dart";
+import "package:iris/client/client.dart";
 
 """;
 
@@ -107,7 +107,7 @@ import "package:remote_services/client/client.dart";
 
 class Services {
 
-  ServiceClient client;
+  IrisClient client;
   Services(this.client);
 
 """;

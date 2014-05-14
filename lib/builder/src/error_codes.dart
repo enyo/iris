@@ -31,7 +31,7 @@ class CompiledErrorCodes {
 
     var compiledString = "$generatedNotice";
 
-    compiledString += """library remote_services_error_codes;
+    compiledString += """library iris_error_codes;
 
 class ErrorCode {
 
