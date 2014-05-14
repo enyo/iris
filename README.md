@@ -1,4 +1,4 @@
-# Remote services
+# Iris
 
 [![Build Status](https://drone.io/github.com/enyo/iris/status.png)](https://drone.io/github.com/enyo/iris/latest)
 
@@ -11,7 +11,7 @@ result back in futures without having to think about the communication.
 ## Usage
 
 
-You can look at the [example repository](https://github.com/enyo/remote-services-example)
+You can look at the [example repository](https://github.com/enyo/iris-example)
 for an implementation.
 
 The typical setup is as follows:
@@ -23,7 +23,7 @@ The typical setup is as follows:
 3. [Create the service definitions](#create-service-definitions) that group your
    services together and setup a server.
 4. [Create a server binary](#create-a-server-binary) which you can then execute
-   to start your remote server.
+   to start your iris server.
 5. [Setup the build.dart file](#setup-builddart) to generate the client library.
 6. [Use the library on the client](#on-the-client)
 
@@ -50,7 +50,7 @@ The way they work in dart is: you define your messages in `.proto` files and a
 library converts them to `dart` classes (subclasses of `GeneratedMessage`) which
 are typed and allow for auto completion and type checking.
 
-Whenever a message in `remote_services` is sent or received, it is an instance
+Whenever a message in `iris` is sent or received, it is an instance
 of `GeneratedMessage`.
 
 
@@ -83,8 +83,8 @@ class UserService extends Service {
   }
 
   /**
-   * This procedure has no return type, so `remote_services` will assume that
-   * nothing will be sent back to the client. It will just await the execution.
+   * This procedure has no return type, so `iris` will assume that  nothing will
+   * be sent back to the client. It will just await the execution.
    */
   @Procedure()
   Future delete(Context context, DeleteUserRequest request) {
@@ -101,7 +101,7 @@ class UserService extends Service {
 ```
 
 As you can see, procedures can either accept and return `GeneratedMessage`s or
-not. `remote_services` understands this, and builds your client library
+not. `Iris` understands this, and builds your client library
 accordingly so you have proper auto completion when writing your client library.
 
 
@@ -116,7 +116,7 @@ Example `lib/service_definitions.dart`:
 ```dart
 library service_definitions;
 
-import "package:remote_services/remote/remote_services.dart";
+import "package:iris/remote/iris.dart";
 
 // This is the file that contains all your services
 import "services/services.dart";
@@ -133,17 +133,17 @@ ServiceDefinitions getServices() {
 
 ### Create a server binary
 
-To actually start the remote server which will listen on incoming connections,
-you simply include those `ServiceDefinitions` and call `.startServers()` on it.
+To actually start the iris server which will listen on incoming connections,
+you simply include `Iris` and call `.startServers()` on it.
 
 Example `bin/start_server.dart`:
 
 ```dart
-import "../lib/service_definitions.dart";
+import "../lib/iris.dart";
 
 main() {
   // Starts all servers that have been added with `.addServer()`.
-  getServiceDefinitions().startServers();
+  getIris().startServers();
 }
 ```
 
@@ -153,30 +153,30 @@ main() {
 Now everything on your server is ready! The services are served automatically
 and are listening for incoming requests.
 
-To use this remote services on the client, `remote_services` generates a library
+To use these remote services on the client, `iris` generates a library
 to be used on the client. This allows you to have completely typed classes that
 you can use, with autocompletion and request / return types.
 
-To let `remote_services` build your client libraries, you need to edit your
+To let `iris` build your client libraries, you need to edit your
 `build.dart` and add this build command:
 
 ```dart
 library build;
 
-import 'package:remote_services/builder/builder.dart' as remote_services;
+import 'package:iris/builder/builder.dart' as iris_builder;
 
-import "lib/service_definitions.dart";
+import "lib/iris.dart";
 
 
-const RS_TARGET = "lib/client_services";
+const IRIS_TARGET = "lib/client_services";
 
-const RS_PROTO_BUFFER_MESSAGES = "lib/proto/messages.dart";
+const IRIS_PROTO_BUFFER_MESSAGES = "lib/proto/messages.dart";
 
-const RS_SERVICES_DIR = "lib/services/";
+const IRIS_SERVICES_DIR = "lib/services/";
 
 void main(List<String> args) {
 
-  remote_services.build(getServices(), RS_TARGET, RS_PROTO_BUFFER_MESSAGES, args: args, includePbMessages: true, servicesDirectory: RS_SERVICES_DIR);
+  iris_builder.build(getIris(), IRIS_TARGET, IRIS_PROTO_BUFFER_MESSAGES, args: args, includePbMessages: true, servicesDirectory: IRIS_SERVICES_DIR);
 
 }
 ```
@@ -190,16 +190,16 @@ be distributed separately.
 
 ### On the client
 
-`remote_services` provides two types of client libraries: one is meant to be
+`Iris` provides two types of client libraries: one is meant to be
 used on a server, and one for the browser.
 
 Here's an example of using the remote services in a browser:
 
 ```dart
-import "package:remote_services/client/browser_http_client.dart";
+import "package:iris/client/browser_http_client.dart";
 
 // This includes your generated library
-import "package:my-generated-remote-services/services.dart";
+import "package:my-generated-lib/services.dart";
 
 main() {
   var client = new HttpServiceClient(Uri.parse("http://localhost:8088"));
@@ -223,7 +223,7 @@ main() {
 ### Error codes
 
 If an error occurs anywhere in a remote service request you **always** get a
-`ServiceClientException`. This `ServiceClientException` has an `errorCode` and
+`IrisException` on the client. This `IrisException` has an `errorCode` and
 an `internalMessage`.
 
 > **Never show the `internalMessage` to the user!** It is only meant to be logged
@@ -236,7 +236,7 @@ and create an error code for it.
 This is how you setup error codes on the server:
 
 ```dart
-class ErrorCode extends RemoteServicesErrorCode {
+class ErrorCode extends IrisErrorCode {
 
   static const INVALID_USERNAME_OR_PASSWORD = const ErrorCode._(0);
 
@@ -273,7 +273,7 @@ services.userService.create().then(print)
 ```
 
 There are several *internal* error codes that you can receive on the client as
-well. Look at the `RemoteServicesErrorCode` class to see what they are.
+well. Look at the `IrisErrorCode` class to see what they are.
 
 > If you provide this `ErrorCode` class to the `build` function of the builder,
 > an `error_code.dart` file is generated, containing all error codes as integers
@@ -402,8 +402,8 @@ There are two ways you can distribute your remote services:
 
 Releasing the remote services as part of your library is easier. You can just
 let the build script create the necessary client files in your `lib/` directory,
-and users can use your server as a dependency, and import the generated *remote
-service* files. This means that the user has access to your protocol buffer and
+and users can use your server as a dependency, and import the generated *iris*
+files. This means that the user has access to your protocol buffer and
 `ErrorCode` files (since they are already in your server library).
 
 The disadvantage of this approach is, of course, that your whole server needs to
@@ -411,18 +411,18 @@ be exposed. This is fine if your library is only used internally (since you can
 have a dependency on a private repository), but if you want to distribute the
 generated client library to other users this won't be working anymore.
 
-This is why `remote_services` has the ability to include all necessary resources
+This is why `iris` has the ability to include all necessary resources
 in the generated library so it can be shipped as a separate library, namely:
 
 - All protocol buffer messages
 - The error codes
 
 When invoking the `build` function of the builder, you can additionally pass
-the `ErrorCode` class with the `errorCodes` parameter. `remote_services` will
+the `ErrorCode` class with the `errorCodes` parameter. `Iris` will
 then generate a `error_code.dart` file with an `ErrorCode` class that contains
 *all* error codes.
 
-If you set the `includePbMessages` option to `true`, `remote_services` will also
+If you set the `includePbMessages` option to `true`, `iris` will also
 copy over all protocol buffer messages, and put them in the `proto/` folder.
 
 With the `targetDirectory` argument (the second positional argument), you can
