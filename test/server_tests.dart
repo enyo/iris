@@ -15,7 +15,7 @@ class MockReq extends Mock implements HttpRequest {
 
   HttpResponse response = new MockRes();
 
-  Uri uri;
+  HttpHeaders headers = new MockHeaders();
 
 }
 
@@ -27,10 +27,15 @@ class MockRes extends Mock implements HttpResponse {
 
 class MockHeaders extends Mock implements HttpHeaders {
 
-  Map data = {};
+  Map<String, String> data = {};
 
   add(String name, String value) {
     data[name] = value;
+  }
+
+
+  List<String> operator [](String name) {
+    return [data[name]];
   }
 
 }
@@ -44,14 +49,12 @@ main() {
       var allowOrigins = const [
                                 "http://localhost:11122",
                                 "https://www.google.com",
-                                "http://exit.live:80",
-                                "https://exit.live:443",
                                 ];
 
       var server = new HttpIrisServer("", 12344, allowOrigins: allowOrigins);
 
       var req = new MockReq();
-      req.uri = Uri.parse("http://localhost:11122");
+      req.headers.add("origin", "http://localhost:11122");
       server.setCorsHeaders(req);
       expect(req.response.headers.data, equals({
         "Access-Control-Allow-Credentials": 'true',
@@ -60,22 +63,16 @@ main() {
         "Access-Control-Allow-Origin": "http://localhost:11122" }));
 
       req = new MockReq();
-      req.uri = Uri.parse("https://www.google.com/search");
+      req.headers.add("origin", "https://www.google.com");
       server.setCorsHeaders(req);
       expect(req.response.headers.data["Access-Control-Allow-Origin"], equals("https://www.google.com"));
 
 
-      // Fails because :80 has been specified in allow origins
       req = new MockReq();
-      req.uri = Uri.parse("http://exit.live:80/profile");
+      req.headers.add("origin", "https://www.unknown.com");
       server.setCorsHeaders(req);
       expect(req.response.headers.data["Access-Control-Allow-Origin"], equals(null));
 
-      // Fails because :443 has been specified in allow origins
-      req = new MockReq();
-      req.uri = Uri.parse("https://exit.live:443/profile");
-      server.setCorsHeaders(req);
-      expect(req.response.headers.data["Access-Control-Allow-Origin"], equals(null));
 
 
     });

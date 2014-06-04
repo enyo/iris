@@ -94,9 +94,6 @@ class HttpIrisServer extends IrisServer {
 
   /// This is used as the `Access-Control-Allow-Origin` CORS header.
   /// E.g.: `["http://localhost:9000"]`
-  ///
-  /// Be ware, that you should never specify the port `80` for `http`, and never
-  /// `443` for `https` requests. They are implied. Specifying them will fail.
   final List<String> allowOrigins;
 
   HttpServer _server;
@@ -243,15 +240,8 @@ class HttpIrisServer extends IrisServer {
    */
   setCorsHeaders(HttpRequest req) {
     if (allowOrigins.isNotEmpty) {
-      var port = req.uri.port;
-      if (port == 0 ||
-          (port == 80 && req.uri.scheme == "http") ||
-          (port == 443 && req.uri.scheme == "https")
-          ) {
-        port = null;
-      }
-      var origin = "${req.uri.scheme}://${req.uri.host}${port == null ? "" : ":" + port.toString()}";
-      if (allowOrigins.contains(origin)) {
+      String origin = (req.headers["origin"] != null && req.headers["origin"].length >= 1) ? req.headers["origin"].first : null;
+      if (origin != null && allowOrigins.contains(origin)) {
         req.response.headers.add("Access-Control-Allow-Credentials", "true");
         req.response.headers.add("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, X-PINGOTHER, X-File-Name, Cache-Control");
         req.response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS");
