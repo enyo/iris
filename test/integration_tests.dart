@@ -15,6 +15,7 @@ import "package:iris/remote/annotations.dart" as annotation;
 
 import "src/authentication.pb.dart";
 import "src/user.pb.dart";
+import 'dart:io';
 
 
 const int PORT = 8123;
@@ -117,7 +118,7 @@ Future<MyContext> contextInitializer(remote.IrisRequest req) {
 remote.Iris getServices() {
   return new remote.Iris(contextInitializer)
         ..addService(new UserService())
-        ..addServer(new remote.HttpIrisServer("localhost", PORT, allowOrigin: "http://127.0.0.1:3030"));
+        ..addServer(new remote.HttpIrisServer("localhost", PORT, allowOrigins: const["http://127.0.0.1:3030"]));
 }
 
 class ClientUserService extends client_lib.Service {

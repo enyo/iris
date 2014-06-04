@@ -5,54 +5,80 @@ import "dart:io";
 import "package:unittest/unittest.dart";
 import "package:mock/mock.dart";
 
-import "package:protobuf/protobuf.dart";
 
 import "../lib/remote/iris.dart";
-import "../lib/remote/annotations.dart" as anno;
 
 
 
-class TestRequest implements GeneratedMessage { }
-class TestResponse implements GeneratedMessage { }
-class TestContext implements Context { }
 
+class MockReq extends Mock implements HttpRequest {
 
-class TestServer extends Mock implements IrisServer {
+  HttpResponse response = new MockRes();
+
+  Uri uri;
 
 }
 
-class TestService extends Service {
+class MockRes extends Mock implements HttpResponse {
 
-  @anno.Procedure()
-  Future<TestResponse> create(Context context, TestRequest req) {
-    return null;
+  HttpHeaders headers = new MockHeaders();
+
+}
+
+class MockHeaders extends Mock implements HttpHeaders {
+
+  Map data = {};
+
+  add(String name, String value) {
+    data[name] = value;
   }
 
 }
 
 
-class NoGeneratedMessageRouteService extends Service {
-
-  @anno.Procedure()
-  Future<String> create(Context context, TestRequest req) => null;
-
-}
-
-
-class WrongParamsRouteService extends Service {
-
-  @anno.Procedure()
-  Future<TestResponse> create(TestRequest req, Context context) => null;
-
-}
-
-
-
-
-
 main() {
 
   group("Server", () {
+    test("setCorsHeaders() sets proper headers", () {
+
+      var allowOrigins = const [
+                                "http://localhost:11122",
+                                "https://www.google.com",
+                                "http://exit.live:80",
+                                "https://exit.live:443",
+                                ];
+
+      var server = new HttpIrisServer("", 12344, allowOrigins: allowOrigins);
+
+      var req = new MockReq();
+      req.uri = Uri.parse("http://localhost:11122");
+      server.setCorsHeaders(req);
+      expect(req.response.headers.data, equals({
+        "Access-Control-Allow-Credentials": 'true',
+        "Access-Control-Allow-Headers": "Content-Type, X-Requested-With, X-PINGOTHER, X-File-Name, Cache-Control",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Origin": "http://localhost:11122" }));
+
+      req = new MockReq();
+      req.uri = Uri.parse("https://www.google.com/search");
+      server.setCorsHeaders(req);
+      expect(req.response.headers.data["Access-Control-Allow-Origin"], equals("https://www.google.com"));
+
+
+      // Fails because :80 has been specified in allow origins
+      req = new MockReq();
+      req.uri = Uri.parse("http://exit.live:80/profile");
+      server.setCorsHeaders(req);
+      expect(req.response.headers.data["Access-Control-Allow-Origin"], equals(null));
+
+      // Fails because :443 has been specified in allow origins
+      req = new MockReq();
+      req.uri = Uri.parse("https://exit.live:443/profile");
+      server.setCorsHeaders(req);
+      expect(req.response.headers.data["Access-Control-Allow-Origin"], equals(null));
+
+
+    });
   });
 
 }

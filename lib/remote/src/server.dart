@@ -93,13 +93,16 @@ class HttpIrisServer extends IrisServer {
   final int port;
 
   /// This is used as the `Access-Control-Allow-Origin` CORS header.
-  /// E.g.: "http://localhost:9000"
-  final String allowOrigin;
+  /// E.g.: `["http://localhost:9000"]`
+  ///
+  /// Be ware, that you should never specify the port `80` for `http`, and never
+  /// `443` for `https` requests. They are implied. Specifying them will fail.
+  final List<String> allowOrigins;
 
   HttpServer _server;
 
 
-  HttpIrisServer(this.address, this.port, {this.allowOrigin});
+  HttpIrisServer(this.address, this.port, {this.allowOrigins: const []});
 
   /**
    * Starts an HTTP server that listens for POST requests for all specified
@@ -236,16 +239,34 @@ class HttpIrisServer extends IrisServer {
 
 
   /**
+   * Sets all necessary headers for CORS.
+   */
+  setCorsHeaders(HttpRequest req) {
+    if (allowOrigins.isNotEmpty) {
+      var port = req.uri.port;
+      if (port == 0 ||
+          (port == 80 && req.uri.scheme == "http") ||
+          (port == 443 && req.uri.scheme == "https")
+          ) {
+        port = null;
+      }
+      var origin = "${req.uri.scheme}://${req.uri.host}${port == null ? "" : ":" + port.toString()}";
+      if (allowOrigins.contains(origin)) {
+        req.response.headers.add("Access-Control-Allow-Credentials", "true");
+        req.response.headers.add("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, X-PINGOTHER, X-File-Name, Cache-Control");
+        req.response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS");
+        req.response.headers.add("Access-Control-Allow-Origin", origin);
+      }
+    }
+  }
+
+
+  /**
    * Don't use this method directly. Use [_sendError] or [_sendMessage] instead.
    */
   _send(HttpRequest req, List<int> body, [int statusCode = HttpStatus.OK]) {
 
-    if (allowOrigin != null) {
-      req.response.headers.add("Access-Control-Allow-Credentials", "true");
-      req.response.headers.add("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, X-PINGOTHER, X-File-Name, Cache-Control");
-      req.response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS");
-      req.response.headers.add("Access-Control-Allow-Origin", allowOrigin);
-    }
+    setCorsHeaders(req);
 
     req.response.statusCode = statusCode;
 

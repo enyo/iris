@@ -127,7 +127,7 @@ ServiceDefinitions getServices() {
         ..addService(new UserService())
         ..addService(new AuthenticationService())
         // Add the servers you want to use
-        ..addServer(new HttpIrisServer("localhost", 8088, allowOrigin: "http://127.0.0.1:3030"));
+        ..addServer(new HttpIrisServer("localhost", 8088, allowOrigins: const ['http://127.0.0.1:3030']));
 }
 ```
 
