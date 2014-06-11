@@ -71,41 +71,64 @@ class BuilderException implements Exception {
  * arguments, and the build will only be done dependent on that information.
  */
 Future build(Iris serviceDefinitions, String targetDirectory, String pbMessagesManifest, {List<String> args, bool includePbMessages: false, String servicesFileName: "services.dart", String servicesDirectory, Type errorCodes}) {
+  log.info("Running iris compiler");
+  log.info("Writing compiled services to: $targetDirectory");
+  log.info("protobuffer Manifset: $pbMessagesManifest");
 
-  var doBuild = false;
+  if (args == null) {
+    log.warning("No build arguments provided. Defaulting to `--full`");
+    args = ['--full'];
+  }
 
-  if (args != null) {
-    var argsBuilder = new _BuildArgs(args, directoriesToWatch: [ path.dirname(pbMessagesManifest), servicesDirectory ]);
-    if (!argsBuilder.changed.isEmpty || !argsBuilder.removed.isEmpty) {
-      log.info("Found changed or deleted files. Building remote services now.");
-      doBuild = true;
+  var argsBuilder = new _BuildArgs(args, directoriesToWatch: [ path.dirname(pbMessagesManifest), servicesDirectory ]);
+
+  var doClean = argsBuilder.clean;
+  var doBuild = argsBuilder.full;
+
+  if (!argsBuilder.changed.isEmpty || !argsBuilder.removed.isEmpty) {
+    log.info("Found changed or deleted files. Building remote services now.");
+    doBuild = true;
+  }
+
+  return _async.then((_) {
+    if (doClean) return cleanTargetDirectory(targetDirectory);
+  }).then((_) {
+    if (doBuild) {
+
+      var targetDir = new Directory(targetDirectory);
+
+      return targetDir.exists()
+          .then((exists) {
+            if (!exists) return targetDir.create();
+          })
+          .then((_) {
+              log.info("Building iris services");
+              var compiledManifest = new CompiledManifest(targetDirectory, pbMessagesManifest, includePbMessages: includePbMessages, fileName: servicesFileName, errorCodes: errorCodes);
+
+              for (var procedure in serviceDefinitions.procedures) {
+                compiledManifest.getOrCreateService(procedure.serviceName).procedures.add(procedure);
+              }
+
+              return compiledManifest.build();
+          })
+          .then((_) => log.info("Iris compilation successful"));
+
     }
-  }
-
-  if (doBuild) {
-
-    var targetDir = new Directory(targetDirectory);
-
-    return targetDir.exists()
-        .then((exists) {
-          if (!exists) return targetDir.create();
-        })
-        .then((_) {
-            var compiledManifest = new CompiledManifest(targetDirectory, pbMessagesManifest, includePbMessages: includePbMessages, fileName: servicesFileName, errorCodes: errorCodes);
-
-            for (var procedure in serviceDefinitions.procedures) {
-              compiledManifest.getOrCreateService(procedure.serviceName).procedures.add(procedure);
-            }
-
-            return compiledManifest.build();
-        });
-
-  }
-  else {
-    return new Future.value();
-  }
+  });
 
 }
+
+Future cleanTargetDirectory(String targetDirectory) {
+  Directory dir = new Directory(targetDirectory);
+  log.info("Cleaning target directory");
+  return dir.exists().then((exists) {
+    if (exists) {
+      return dir.delete(recursive: true);
+    }
+  });
+}
+
+final _async = new Future.value();
 
 
 
