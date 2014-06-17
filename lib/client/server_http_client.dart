@@ -48,7 +48,7 @@ class HttpIrisClient extends IrisClient {
    *
    * You should never invoke this method directly but use [dispatch].
    */
-  Future<GeneratedMessage> query(String path, GeneratedMessage requestMessage, Type expectedResponseType) {
+  Future<GeneratedMessage> query(String path, GeneratedMessage requestMessage, Function convertToMessage) {
 
     HttpClient client = new HttpClient();
 
@@ -82,7 +82,7 @@ class HttpIrisClient extends IrisClient {
 
         if (response.statusCode >= 200 && response.statusCode < 300) {
 
-          return getMessageFromBytes(expectedResponseType, bytes);
+          return getMessageFromBytes(convertToMessage, bytes);
 
         }
         else {

@@ -125,17 +125,17 @@ class ClientUserService extends client_lib.Service {
 
   ClientUserService(client_lib.IrisClient client) : super(client);
 
-  Future<User> search(UserSearch requestMessage) => client.dispatch('/UserService.search', requestMessage, User);
+  Future<User> search(UserSearch requestMessage) => client.dispatch('/UserService.search', requestMessage, (bytes) => new User.fromBuffer(bytes));
 
-  Future<User> unauthorized(UserSearch requestMessage) => client.dispatch('/UserService.unauthorized', requestMessage, User);
+  Future<User> unauthorized(UserSearch requestMessage) => client.dispatch('/UserService.unauthorized', requestMessage, (bytes) => new User.fromBuffer(bytes));
 
-  Future<User> throws(UserSearch requestMessage) => client.dispatch('/UserService.throws', requestMessage, User);
+  Future<User> throws(UserSearch requestMessage) => client.dispatch('/UserService.throws', requestMessage, (bytes) => new User.fromBuffer(bytes));
 
-  Future throwsRandomException() => client.dispatch('/UserService.throwsRandomException', null, User, false);
+  Future throwsRandomException() => client.dispatch('/UserService.throwsRandomException', null, (bytes) => new User.fromBuffer(bytes), false);
 
-  Future<User> notAnnotated(UserSearch requestMessage) => client.dispatch('/UserService.notAnnotated', requestMessage, User);
+  Future<User> notAnnotated(UserSearch requestMessage) => client.dispatch('/UserService.notAnnotated', requestMessage, (bytes) => new User.fromBuffer(bytes));
 
-  Future<User> noMessage() => client.dispatch('/UserService.noMessage', null, User, false);
+  Future<User> noMessage() => client.dispatch('/UserService.noMessage', null, (bytes) => new User.fromBuffer(bytes), false);
 
   Future noReturnMessage(UserSearch requestMessage) => client.dispatch('/UserService.noReturnMessage', requestMessage, null);
 

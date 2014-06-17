@@ -1,6 +1,5 @@
 library client;
 
-import "dart:mirrors";
 import "dart:async";
 import "dart:convert";
 
@@ -44,34 +43,34 @@ abstract class IrisClient {
   /**
    * This is the method used to communicate with the remote service.
    */
-  Future<GeneratedMessage> dispatch(String path, GeneratedMessage requestMessage, Type expectedResponseType, [requiredRequestMessage = true]) {
+  Future<GeneratedMessage> dispatch(String path, GeneratedMessage requestMessage, Function convertToMessage, [requiredRequestMessage = true]) {
     if (requiredRequestMessage) {
       if (requestMessage == null) {
         throw new IrisException(IrisErrorCode.IRIS_REQUIRED_PB_MESSAGE_NOT_PROVIDED.value);
       }
       requestMessage.check();
     }
-    return query(path, requestMessage, expectedResponseType)
+    return query(path, requestMessage, convertToMessage)
         .then((GeneratedMessage responseMessage) {
-          if (expectedResponseType != null && responseMessage == null) {
+          if (convertToMessage != null && responseMessage == null) {
             throw new IrisException(IrisErrorCode.IRIS_REQUIRED_PB_MESSAGE_NOT_PROVIDED.value);
           }
           return responseMessage;
         });
   }
 
-  Future<GeneratedMessage> query(String path, GeneratedMessage requestMessage, Type expectedResponseType);
+  Future<GeneratedMessage> query(String path, GeneratedMessage requestMessage, Function convertToMessage);
 
 
   /**
-   * Returns the proper [GeneratedMessage] or null if [expectedMessageType] is
+   * Returns the proper [GeneratedMessage] or null if [convertToMessage] is
    * `null`.
    */
-  GeneratedMessage getMessageFromBytes(Type expectedMessageType, List<int> bytes) {
-    if (expectedMessageType == null) {
+  GeneratedMessage getMessageFromBytes(Function convertToMessage, List<int> bytes) {
+    if (convertToMessage == null) {
       return null;
     } else {
-      GeneratedMessage message = reflectClass(expectedMessageType).newInstance(const Symbol("fromBuffer"), [bytes]).reflectee;
+      GeneratedMessage message = convertToMessage(bytes);
       message.check();
       return message;
     }
