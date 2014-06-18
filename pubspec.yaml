@@ -1,7 +1,7 @@
 name: iris
 description: A complete abstraction of client <-> server communication
 author: Matias Meno <m@tias.me>
-version: 0.5.0
+version: 0.5.1
 homepage: https://enyo.github.io/iris
 dependencies:
   logging: ">=0.9.1+1 <0.10.0"
