@@ -15,6 +15,7 @@ import 'client.dart';
 export 'client.dart';
 
 import '../remote/error_code.dart';
+import 'dart:typed_data';
 
 Logger log = new Logger("IrisClient");
 
@@ -77,11 +78,11 @@ class HttpIrisClient extends IrisClient {
       // Note: file:// URIs have status of 0.
       if (xhr.status >= 200 && xhr.status < 300) {
 
-        completer.complete(getMessageFromBytes(convertToMessage, xhr.response));
+        completer.complete(getMessageFromBytes(convertToMessage, new Uint8List.view(xhr.response)));
 
       } else {
 
-        _rejectWithError(getIrisExceptionFromBytes(xhr.response));
+        _rejectWithError(getIrisExceptionFromBytes(new Uint8List.view(xhr.response)));
 
       }
     });
