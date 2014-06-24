@@ -94,6 +94,8 @@ class HttpIrisServer extends IrisServer {
 
   /// This is used as the `Access-Control-Allow-Origin` CORS header.
   /// E.g.: `["http://localhost:9000"]`
+  ///
+  /// **If this list is empty, every origin will be allowed!**
   final List<String> allowOrigins;
 
   HttpServer _server;
@@ -239,14 +241,12 @@ class HttpIrisServer extends IrisServer {
    * Sets all necessary headers for CORS.
    */
   setCorsHeaders(HttpRequest req) {
-    if (allowOrigins.isNotEmpty) {
-      String origin = (req.headers["origin"] != null && req.headers["origin"].length >= 1) ? req.headers["origin"].first : null;
-      if (origin != null && allowOrigins.contains(origin)) {
-        req.response.headers.add("Access-Control-Allow-Credentials", "true");
-        req.response.headers.add("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, X-PINGOTHER, X-File-Name, Cache-Control");
-        req.response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS");
-        req.response.headers.add("Access-Control-Allow-Origin", origin);
-      }
+    String origin = (req.headers["origin"] != null && req.headers["origin"].length >= 1) ? req.headers["origin"].first : null;
+    if (allowOrigins.isEmpty || allowOrigins.contains(origin)) {
+      req.response.headers.add("Access-Control-Allow-Credentials", "true");
+      req.response.headers.add("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, X-PINGOTHER, X-File-Name, Cache-Control");
+      req.response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS");
+      req.response.headers.add("Access-Control-Allow-Origin", origin);
     }
   }
 
