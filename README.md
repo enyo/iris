@@ -107,9 +107,9 @@ accordingly so you have proper auto completion when writing your client library.
 
 ### Create service definitions
 
-In a separate file you create a `getServiceDefinitions()` function that returns
-a `ServiceDefinitions` object. This object will be used to start the server, and
-to build the files for the client.
+In a separate file you create a function that returns a `ServiceDefinitions`
+object. This object will be used to start the server, and to build the files
+for the client.
 
 Example `lib/service_definitions.dart`:
 
@@ -121,7 +121,7 @@ import "package:iris/remote/iris.dart";
 // This is the file that contains all your services
 import "services/services.dart";
 
-ServiceDefinitions getServices() {
+ServiceDefinitions getIris() {
   return new ServiceDefinitions()
         // Add the services you want to be served
         ..addService(new UserService())
