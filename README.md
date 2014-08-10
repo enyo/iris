@@ -20,7 +20,7 @@ The typical setup is as follows:
 1. [Setup your server to generate protocol buffer messages](#setup-protocol-buffers)
 2. [Write your services & procedures](#write-services-on-server) that handle the
    requests.
-3. [Create the service definitions](#create-service-definitions) that group your
+3. [Create an iris object](#create-an-iris-object) that group your
    services together and setup a server.
 4. [Create a server binary](#create-a-server-binary) which you can then execute
    to start your iris server.
@@ -105,7 +105,7 @@ not. `Iris` understands this, and builds your client library
 accordingly so you have proper auto completion when writing your client library.
 
 
-### Create iris object
+### Create an iris object
 
 In a separate file you create a function that returns an `Iris` object. This
 object will be used to start the server, and to build the files for the client.
