@@ -105,13 +105,12 @@ not. `Iris` understands this, and builds your client library
 accordingly so you have proper auto completion when writing your client library.
 
 
-### Create service definitions
+### Create iris object
 
-In a separate file you create a function that returns a `ServiceDefinitions`
-object. This object will be used to start the server, and to build the files
-for the client.
+In a separate file you create a function that returns an `Iris` object. This
+object will be used to start the server, and to build the files for the client.
 
-Example `lib/service_definitions.dart`:
+Example `lib/iris.dart`:
 
 ```dart
 library service_definitions;
@@ -121,7 +120,7 @@ import "package:iris/remote/iris.dart";
 // This is the file that contains all your services
 import "services/services.dart";
 
-ServiceDefinitions getIris() {
+Iris getIris() {
   return new Iris()
         // Add the services you want to be served
         ..addService(new UserService())
@@ -222,9 +221,9 @@ main() {
 
 ### Error codes
 
-If an error occurs anywhere in a remote service request you **always** get a
-`IrisException` on the client. This `IrisException` has an `errorCode` and
-an `internalMessage`.
+If an error occurs anywhere in a remote service request you **always**
+get an `IrisException` on the client. This `IrisException` has an
+`errorCode` and an `internalMessage`.
 
 > **Never show the `internalMessage` to the user!** It is only meant to be logged
 > or inspected by developers.
@@ -291,7 +290,7 @@ If you want to have additional information in you context (like session data),
 you can define your own context class and provide a `ContextInitializer` to
 create that object for you.
 
-> `ContextInitializers` are the first thing called when a request comes in.
+> `ContextInitializer`s are the first thing called when a request comes in.
 > After that all filters are called sequentially, and then your procedure with
 > the initialized `Context`.
 
@@ -331,10 +330,10 @@ Future<MyContext> myContextInitializer(IrisRequest req) {
 }
 
 
-ServiceDefinitions getServiceDefinitions() {
+Iris getIris() {
   // And where you create you service definitions, you now pass the context
   // initializer
-  return new ServiceDefinitions(myContextInitializer)
+  return new Iris(myContextInitializer)
       ..addService(UserService)
       ..etc...
 }
