@@ -264,7 +264,7 @@ on your client:
 
 ```dart
 services.userService.create().then(print)
-    .catchError((ServiceClientException ex) {
+    .catchError((IrisException ex) {
       if (ex.errorCode == ErrorCode.INVALID_EMAIL) {
         alert("Please provide a valid email address");
       }
