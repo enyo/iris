@@ -122,7 +122,7 @@ import "package:iris/remote/iris.dart";
 import "services/services.dart";
 
 ServiceDefinitions getIris() {
-  return new ServiceDefinitions()
+  return new Iris()
         // Add the services you want to be served
         ..addService(new UserService())
         ..addService(new AuthenticationService())
