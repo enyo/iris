@@ -1,9 +1,18 @@
-part of remote_services_builder;
+library error_code_compiler;
 
+import 'dart:async';
+import 'dart:io';
+import 'dart:mirrors';
+import '../../remote/error_code.dart';
 
-
+/// Added to every generated file.
+String generatedNotice = """///
+// Generated file. Do not edit.
+///
+""";
 
 class CompiledErrorCodes {
+  //TODO (ovangle): should be rewritten to use the analyzer.
 
 
   Type errorCodes;
@@ -15,7 +24,7 @@ class CompiledErrorCodes {
   CompiledErrorCodes(this.targetDirectory, this.errorCodes) {
     reflectedCodes = reflectType(errorCodes);
     if (!reflectedCodes.isSubtypeOf(reflectClass(IrisErrorCode))) {
-      throw new BuilderException("Your ErrorCode class needs to implement the RemoteServicesErrorCode class. Please look at its documentation.");
+      throw "Your ErrorCode class needs to implement the RemoteServicesErrorCode class. Please look at its documentation.";
     }
   }
 
@@ -62,7 +71,8 @@ class ErrorCode {
       var keyName = MirrorSystem.getName(k);
       int codeNum = reflectedRSErrorCode.getField(k).reflectee.value;
 
-      if (codes.values.contains(codeNum)) throw new BuilderException("Ooops. The library has an error and used the same code twice! Please contact the authors immediately.");
+      if (codes.values.contains(codeNum))
+        throw "Cannot use the same error code ($codeNum) twice";
 
       codes[keyName] = codeNum;
     });
@@ -72,10 +82,14 @@ class ErrorCode {
       var keyName = MirrorSystem.getName(k);
       int codeNum = reflectedCodes.getField(k).reflectee.value;
 
-      if (keyName.startsWith("IRIS_")) throw new BuilderException("You can't define code names starting with 'IRIS_' ($keyName).");
-      if (codes.containsKey(keyName)) throw new BuilderException("The code $keyName is already defined.");
-      if (codes.values.contains(codeNum)) throw new BuilderException("You can't use the same code twice.");
-      if (codeNum >= 900 && codeNum < 1000) throw new BuilderException("The code range 900...999 is reserved for internal use.");
+      if (keyName.startsWith("IRIS_"))
+        throw "Invalid field name '${keyName}'. Error codes cannot begin with 'IRIS_'";
+      if (codes.containsKey(keyName))
+        throw "The code $keyName is already defined.";
+      if (codes.values.contains(codeNum))
+        throw "Code number $codeNum cannot be used twice";
+      if (codeNum >= 900 && codeNum < 1000)
+        throw "The code range 900...999 is reserved for internal use.";
 
       codes[keyName] = codeNum;
     });

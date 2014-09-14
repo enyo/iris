@@ -27,13 +27,29 @@ class Procedure {
  * This annotation is optional. If you don't have any service filters, you don't
  * need to assign this annotation.
  */
-class Service {
+class IrisService {
+
+  /**
+   * The path to the .proto template which defines this service
+   * (from the root of the protobuffer directory.
+   */
+  final String declaredIn;
 
   final List<FilterFunction> filters;
 
   /**
    * The order of this List defines the order of the execution of the filters.
    */
-  const Service({this.filters: const []});
+  const IrisService(String this.declaredIn, {this.filters: const []});
 
+}
+
+/**
+ * Use this annotation on a class or top level function to copy the code into
+ * the compiled iris library.
+ */
+const include = const IrisInclude();
+
+class IrisInclude {
+  const IrisInclude();
 }

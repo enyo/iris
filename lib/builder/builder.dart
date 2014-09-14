@@ -1,134 +1,152 @@
 library remote_services_builder;
 
-import "dart:io";
-import "dart:mirrors";
-import "package:logging/logging.dart";
+import 'dart:async';
+import 'dart:convert' show JSON;
+import 'dart:io';
+import 'package:path/path.dart' as path;
+import 'package:quiver/async.dart';
 
-import "package:path/path.dart" as path;
+import 'src/analysis_message.dart';
+import 'src/service_analyzer.dart';
+import 'src/service_compiler.dart';
+import 'build_options.dart';
+import 'src/service_info.dart';
 
-import '../remote/iris.dart';
+import 'src/error_codes.dart';
 
-import '../remote/error_code.dart';
-
-part 'src/utils.dart';
-part 'src/manifest.dart';
-part 'src/service.dart';
-part 'src/build_args.dart';
-part 'src/error_codes.dart';
-
-
-/// Added to every generated file.
-String generatedNotice = """///
-/// Generated file. Do not edit.
-///
-""";
-
-
-Logger log = new Logger("RemoteServicesBuilder");
 
 
 /**
- * Thrown when there was a problemen with the services definition.
+ * Analyze the services.
+ * [:entryPoint:] is a list of absolutely specified paths to libraries
+ * which contain service definitions.
+ *
+ * [:pathToSdk:] is the path to the dart sdk on the filesystem.
+ *
+ * [:pathToProjectRoot:] is an abolutely specified path to the root of the
+ * project. If not specified, it will be inferred from the most specific
+ * ancestor of the directory which contains the running script
+ *
+ * [:protoRoot:] is the directory (specified relative to the project root)
+ * which contains the protobuffer definitions.
+ *
+ * [:pathToProtoc:] is the path to the protoc compiler executable. If not
+ * provided, will search the user's $PATH to locate the executable.
  */
-class BuilderException implements Exception {
+Future build({
+    String irisTarget,
+    Map<String,String> sourceMap: const <String,String>{'.': 'lib/proto'},
+    List<String> entryPoints,
+    String pathToSdk,
+    String pathToProjectRoot,
+    String pathToProtoc,
+    String templateRoot: 'proto',
+    List<String> buildArgs: const ['--full']
+}) {
+  if (pathToSdk == null) {
+    throw 'A SDK directory must be provided';
+  }
+  if (pathToProjectRoot == null) {
+    pathToProjectRoot = _inferProjectRootDirectory();
+    //print('PROJECT ROOT: $pathToProjectRoot');
+  }
+  if (irisTarget == null)
+    throw 'An iris target directory must be specified';
 
-  String message;
+  if (pathToProtoc == null) {
+    pathToProtoc = _getProtocFromPath();
+    if (pathToProtoc == null) {
+      throw "'protoc' exutable not found on user's \$PATH";
+    }
+  }
 
-  BuilderException(this.message);
 
 
-  String toString() => "BuilderException: $message";
+  var buildOptions = new BuildOptions()
+      ..irisTarget = irisTarget
+      ..pathToSdk = pathToSdk
+      ..pathToProtoc = pathToProtoc
+      ..pathToProjectRoot = pathToProjectRoot
+      ..sourceMap = sourceMap
+      ..templateRoot = templateRoot
+      ..buildArgs = buildArgs;
 
+  var serviceCompiler = new ServiceCompiler(buildOptions);
+  var serviceAnalyzer = new ServiceAnalyzer.withOptions(buildOptions);
+
+  return forEachAsync(
+      entryPoints,
+      (entryPoint) => _buildEntryPoint(entryPoint, serviceCompiler, serviceAnalyzer, buildOptions)
+  ).then((_) {
+    return serviceCompiler.build();
+  });
 }
 
+Future _buildEntryPoint(String entryPoint, ServiceCompiler compiler, ServiceAnalyzer analyzer, BuildOptions buildOptions) {
+  // Crawl the source for classes annotated with @IrisService annotations.
+  // Package directories are not scanned (should be included as separate entry points
+  // if necessary).
+  var serviceInfos = ServiceInfo.crawl(entryPoint, buildOptions.packageRoots, false);
+  print('Number of services found: $serviceInfos');
+
+  List<ServiceInfo> analyzedInfos = <ServiceInfo>[];
+
+  return forEachAsync(serviceInfos, (serviceInfo) {
+    return compiler.resolve(serviceInfo).then((serviceInfo) {
+      if (!analyzer.requiresAnalysis(serviceInfo)) {
+        return;
+      }
+      analyzedInfos.add(serviceInfo);
+
+      var messages = analyzer.analyze(serviceInfo);
+      if (messages.isNotEmpty) {
+        messages.forEach((msg) => printAnalysisMessage(msg, buildOptions));
+      }
+    });
+  });
+}
 
 /**
- * Compile the remote services to be used by the client.
- *
- * **If you put this function in the `build.dart` file then you need to pass
- * the [args] parameter!** Otherwise those files will be rebuilt every time
- * *any* file in the project changes which can potentially end up in an infinite
- * loop.
- * You will porbably also set the [servicesDirectory] which tells the builder
- * where to look for changes.
- * The protocol buffer messages directory is only watched if [includePbMessages]
- * is true (since otherwise the lib doesn't need to rebuild).
- *
- *
- * The [targetDirectory] defines where to put the compiled files.
- *
- * The [pbMessagesManifest] defines where the protocol buffer messages manifest
- * file ist located. This is relative to the [targetDirectory].
- *
- * [includePbMessages] defines whether you want all protocol buffer messages to
- * be copied over to the target directory as well. This is useful if you want
- * to make your remote services public but not the whole server.
- *
- * Setting [errorCodes] creates a `error_code.dart` file that the client can
- * import to handle error codes properly.
- *
- * If [args] are provided, then it will be looked for "--changed" and "--removed"
- * arguments, and the build will only be done dependent on that information.
+ * Build the error codes defined in type type [:errorCodeType:] and
+ * output the resulting enum to the directory [:irisTarget:] as `error_codes.dart`.
  */
-Future build(Iris serviceDefinitions, String targetDirectory, String pbMessagesManifest, {List<String> args, bool includePbMessages: false, String servicesFileName: "services.dart", String servicesDirectory, Type errorCodes}) {
-  log.info("Running iris compiler");
-  log.info("Writing compiled services to: $targetDirectory");
-  log.info("protobuffer Manifset: $pbMessagesManifest");
+Future buildErrorCodes({
+  String irisTarget,
+  Type errorCodeType
+}) {
+  //TODO (ovangle): This should be rewritten to use the analyzer, so that
+  // no libraries need to be imported by the builder.
+  // For the moment, just include it as a separate build step.
 
-  if (args == null) {
-    log.warning("No build arguments provided. Defaulting to `--full`");
-    args = ['--full'];
-  }
-
-  var argsBuilder = new _BuildArgs(args, directoriesToWatch: [ path.dirname(pbMessagesManifest), servicesDirectory ]);
-
-  var doClean = argsBuilder.clean;
-  var doBuild = argsBuilder.full;
-
-  if (!argsBuilder.changed.isEmpty || !argsBuilder.removed.isEmpty) {
-    log.info("Found changed or deleted files. Building remote services now.");
-    doBuild = true;
-  }
-
-  return _async.then((_) {
-    if (doClean) return cleanTargetDirectory(targetDirectory);
-  }).then((_) {
-    if (doBuild) {
-
-      var targetDir = new Directory(targetDirectory);
-
-      return targetDir.exists()
-          .then((exists) {
-            if (!exists) return targetDir.create();
-          })
-          .then((_) {
-              log.info("Building iris services");
-              var compiledManifest = new CompiledManifest(targetDirectory, pbMessagesManifest, includePbMessages: includePbMessages, fileName: servicesFileName, errorCodes: errorCodes);
-
-              for (var procedure in serviceDefinitions.procedures) {
-                compiledManifest.getOrCreateService(procedure.serviceName).procedures.add(procedure);
-              }
-
-              return compiledManifest.build();
-          })
-          .then((_) => log.info("Iris compilation successful"));
-
-    }
-  });
-
+  var compiler = new CompiledErrorCodes(irisTarget, errorCodeType);
+  return compiler.build();
 }
 
-Future cleanTargetDirectory(String targetDirectory) {
-  Directory dir = new Directory(targetDirectory);
-  log.info("Cleaning target directory");
-  return dir.exists().then((exists) {
-    if (exists) {
-      return dir.delete(recursive: true);
-    }
-  });
+void printAnalysisMessage(AnalysisMessage analysisMessage, BuildOptions buildOptions) {
+  print(analysisMessage);
+  var json = analysisMessage.toJson();
+  print('');
+  print('[${JSON.encode(json)}]');
+  print('');
 }
 
-final _async = new Future.value();
 
+String _inferProjectRootDirectory() {
+  var dir = new Directory(path.dirname('$Platform.script.path'));
+  while (!dir.listSync().any((f) => f.path.endsWith('pubspec.yaml'))) {
+    dir = dir.parent;
+  }
+  return path.normalize(dir.absolute.path);
+}
 
-
+String _getProtocFromPath() {
+  var sysPath = Platform.environment['PATH'].split(':');
+  return sysPath.fold(null, (exec, pathElem) {
+    if (exec != null) return exec;
+    var dir = new Directory(pathElem);
+    return dir.listSync().firstWhere(
+        (f) => path.basename(f.path) == 'protoc',
+        orElse: () => null
+    );
+  });
+}

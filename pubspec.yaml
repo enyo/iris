@@ -4,12 +4,18 @@ author: Matias Meno <m@tias.me>
 version: 0.6.0
 homepage: https://enyo.github.io/iris
 dependencies:
+  analyzer: any
   logging: ">=0.9.1+1 <0.10.0"
   annotation_crawler: ">=0.1.0 <0.2.0"
   protobuf: ">=0.3.3 <0.4.0"
   route: ">=0.4.6 <0.5.0"
   barback: ">=0.13.0 <0.14.0"
   path: ">=1.1.0 <2.0.0"
+  protoc_plugin:
+    git:
+      url: 'https://github.com/ovangle/dart-protoc-plugin'
+      ref: 02ce3493e41a977ed8fd9cb398b8d474a47d0b92
+
 dev_dependencies:
   unittest: ">=0.11.0 <0.12.0"
   mock: ">=0.11.0 <0.12.0"
