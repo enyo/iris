@@ -69,6 +69,9 @@ class ServiceProcedure {
   /// The instance of the service this procedure will be called on.
   final Service service;
 
+  /// The prefix used in the path
+  final String prefix;
+
   /// The expected [GeneratedMessage] type this procedure expects.
   final Type expectedRequestType;
 
@@ -83,11 +86,28 @@ class ServiceProcedure {
 
 
 
-  ServiceProcedure(this.service, this.method, this.expectedRequestType, this.responseType, this.filterFunctions);
+  ServiceProcedure(this.service, this.prefix, this.method, this.expectedRequestType, this.responseType, this.filterFunctions);
+
+
+  /**
+   * Returns the prefix with a leading and trailing slash.
+   */
+  String get _formattedPrefix {
+    String formattedPrefix = "";
+    if (prefix != null && prefix != "") {
+      if (!prefix.startsWith("/")) formattedPrefix = "/";
+      formattedPrefix += prefix;
+      if (!prefix.endsWith("/")) formattedPrefix += "/";
+    }
+    else {
+      formattedPrefix = "/";
+    }
+    return formattedPrefix;
+  }
 
   /// Returns the generated path for this procedure. Either to be used as HTTP path
   /// or as name for sockets.
-  String get path => "/$serviceName.$methodName";
+  String get path => "$_formattedPrefix$serviceName.$methodName";
 
   String get serviceName => service.runtimeType.toString();
 
@@ -118,7 +138,12 @@ class Iris {
 
   IrisErrorCode errorCodes;
 
-  Iris([this._contextInitializer]);
+
+  /// This defines under which http prefix this request handler will accept
+  /// incoming requests. No leading or trailing slashes are needed.
+  /// If `null` no prefix is used.
+  /// Examples: `api`, `api/v2.0`
+  final String prefix;
 
   Future<Context> _defaultContextInitializer(IrisRequest req) => new Future.value(new Context(req));
 
@@ -126,16 +151,32 @@ class Iris {
   /// The list of all [ServiceProcedure]s available.
   List<ServiceProcedure> procedures = [];
 
-  /// The list of all servers configured for those services.
-  List<IrisServer> servers = [];
+  /// The request handler for this iris instance.
+  final IrisRequestHandler requestHandler;
+
+
+  /// If the [requestHandler] is not a server, then [Iris] creates a stream
+  /// controller on startup to give it to the request handler.
+  /// Every time [handleRequest] is called, the [HttpRequest] is added to this
+  /// stream controller.
+  StreamController<HttpRequest> requestStreamController;
+
+
+  /**
+   * Accepts either [IrisRequestHandler]s or [IrisServer]s.
+   */
+  Iris(this.requestHandler, {contextInitializer: null, this.prefix: "/"}) : _contextInitializer = contextInitializer {
+    requestHandler._contextInitializer = contextInitializer;
+
+    // Will be populated every time [addService] is called
+    requestHandler._procedures = procedures;
+  }
 
   /**
    * Checks the service, and creates a list of [ServiceProcedure]s for every
    * [Procedure] found in the service.
    */
   addService(Service service) {
-    if (servers.length != 0) throw new IrisException._("You can't add a service after servers have been added.");
-
     var reflectedServiceClass = reflectClass(service.runtimeType);
     var serviceFilters = [];
 
@@ -188,7 +229,7 @@ class Iris {
 
         var requestType = method.parameters.length == 2 ? method.parameters.last.type.reflectedType : null;
 
-        var serviceProcedure = new ServiceProcedure(service, method, requestType, returnType, filters);
+        var serviceProcedure = new ServiceProcedure(service, prefix, method, requestType, returnType, filters);
         log.fine("Found procedure ${serviceProcedure.methodName} on service ${serviceProcedure.serviceName}");
         procedures.add(serviceProcedure);
       }
@@ -196,31 +237,35 @@ class Iris {
   }
 
 
-  /**
-   * Sets all procedures on the server and adds it to the list.
-   */
-  addServer(IrisServer server) {
-    if (procedures.isEmpty) throw new IrisException._("You tried to add a server but no procedures have been added yet.");
 
-    server._procedures = procedures;
-    server._contextInitializer = contextInitializer;
-    servers.add(server);
+  IrisServer _getServer() {
+    if (requestHandler is IrisServer) {
+      return requestHandler;
+    }
+    else {
+      throw new IrisException._("Trying to use a request handler as server.");
+    }
+
   }
 
 
   /**
-   * Starts all servers
+   * Start the [IrisServer] if the request handler is one. This throws an
+   * exception if th requestHandler is not a server.
+   * Use [handleRequest] in this case.
    */
-  Future startServers() {
-    return Future.wait(servers.map((server) => server.start()));
+  Future startServer() {
+    return _getServer().start();
   }
 
 
   /**
-   * Stops all servers
+   * Stops the [IrisServer] if the request handler is one. This throws an
+   * exception if th requestHandler is not a server.
+   * Use [handleRequest] in this case.
    */
-  Future stopServers() {
-    return Future.wait(servers.map((server) => server.stop()));
+  Future stopServer() {
+    return _getServer().stop();
   }
 
 

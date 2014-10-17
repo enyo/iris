@@ -25,6 +25,8 @@ class IrisRequest {
 
   final HttpRequest _httpRequest;
 
+  HttpRequest get httpRequest => _httpRequest;
+
   IrisRequest.fromHttp(this._httpRequest);
 
   IrisRequest.fromSocket() : _httpRequest = null;
@@ -49,9 +51,9 @@ class IrisRequest {
 
 
 /**
- * The base class for servers.
+ * The base to handle iris requests.
  */
-abstract class IrisServer {
+abstract class IrisRequestHandler {
 
   List<ServiceProcedure> _procedures;
 
@@ -60,12 +62,6 @@ abstract class IrisServer {
   ContextInitializer _contextInitializer;
 
   ContextInitializer get contextInitializer => _contextInitializer;
-
-
-  void start();
-
-  void stop();
-
 
   GeneratedMessage _getMessageFromBytes(ServiceProcedure procedure, List<int> bytes) {
     try {
@@ -80,17 +76,23 @@ abstract class IrisServer {
 
 }
 
+/**
+ * Adds additional server functionality to startup a server.
+ */
+abstract class IrisServer extends IrisRequestHandler {
+
+  Future start();
+
+  Future stop();
+
+}
 
 
 /**
  * The HttpServiceServer exposes all procedures via Http.
  */
-class HttpIrisServer extends IrisServer {
+class IrisHttpRequestHandler extends IrisRequestHandler {
 
-
-  final dynamic address;
-
-  final int port;
 
   /// This is used as the `Access-Control-Allow-Origin` CORS header.
   /// E.g.: `["http://localhost:9000"]`
@@ -101,40 +103,36 @@ class HttpIrisServer extends IrisServer {
   HttpServer _server;
 
 
-  HttpIrisServer(this.address, this.port, {this.allowOrigins: const []});
+  /**
+   * Creates an HttpServer that starts up the server itself on specified address
+   * and port.
+   */
+  IrisHttpRequestHandler({this.allowOrigins: const []});
+
+
 
   /**
-   * Starts an HTTP server that listens for POST requests for all specified
-   * procedures and always returns the expected [GeneratedMessage].
-   *
-   * When an error error occurs, a statusCode between 400 and 599 will be sent,
-   * and a [ErrorMessage] along with it.
+   * Listens to the requests, and routes to the appropriate procedures.
    */
-  Future start() {
-    return HttpServer.bind(address, port).then((server) {
-      _server = server;
+  setupRequestHandling(Stream<HttpRequest> requests) {
 
-      log.info("Listening on $address, port $port.");
+    var router = new Router(requests);
 
-      var router = new Router(server);
+    // Setup the procedures
+    for (ServiceProcedure procedure in procedures) {
 
-      // Setup the procedures
-      for (ServiceProcedure procedure in procedures) {
+      log.info("- '${procedure.path}' - expects: '${procedure.expectedRequestType.toString()}', returns: '${procedure.responseType.toString()}'");
 
-        log.info("- '${procedure.path}' - expects: '${procedure.expectedRequestType.toString()}', returns: '${procedure.responseType.toString()}'");
+      router.serve(procedure.path, method: "POST").listen((HttpRequest req) {
 
-        router.serve(procedure.path, method: "POST").listen((HttpRequest req) {
+        _handleRequest(req, procedure);
 
-          _handleRequest(req, procedure);
+      });
+    }
 
-        });
-      }
-
-      router.defaultStream.listen(serveNotFound);
-    });
+    router.defaultStream.listen(serveNotFound);
   }
 
-  Future stop() => _server == null ? new Future.value() : _server.close();
 
   Future _handleRequest(HttpRequest req, ServiceProcedure procedure) {
 
@@ -264,5 +262,53 @@ class HttpIrisServer extends IrisServer {
 
     return req.response.close();
   }
+
+}
+
+
+
+
+
+/**
+ * The HttpServiceServer exposes all procedures via Http.
+ */
+class IrisHttpServer extends IrisHttpRequestHandler implements IrisServer {
+
+
+  final dynamic address;
+
+  final int port;
+
+
+  HttpServer _server;
+
+
+  /**
+   * Creates an HttpServer that starts up the server itself on specified address
+   * and port.
+   */
+  IrisHttpServer(this.address, this.port, {allowOrigins: const []}) : super(allowOrigins: allowOrigins);
+
+
+  /**
+   * Starts an HTTP server that listens for POST requests for all specified
+   * procedures and always returns the expected [GeneratedMessage].
+   *
+   * When an error error occurs, a statusCode between 400 and 599 will be sent,
+   * and a [ErrorMessage] along with it.
+   */
+  Future start() {
+    return HttpServer.bind(address, port).then((server) {
+      _server = server;
+
+      log.info("Listening on $address, port $port.");
+
+      setupRequestHandling(server);
+
+    });
+  }
+
+  Future stop() => _server == null ? new Future.value() : _server.close();
+
 
 }
