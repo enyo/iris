@@ -39,7 +39,7 @@ class TestService extends Service {
 }
 
 
-@anno.Service(filters: const [serviceFilterFunc])
+@anno.IrisService(null, filters: const [serviceFilterFunc])
 class ServiceWithFilters extends Service {
 
   @anno.Procedure()

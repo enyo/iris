@@ -18,6 +18,8 @@ import "package:annotation_crawler/annotation_crawler.dart" as annotation_crawle
 import "error_code.dart";
 import "../src/error_message.dart";
 
+export 'annotations.dart';
+
 part "src/exceptions.dart";
 part "src/server.dart";
 part "src/service.dart";
@@ -46,7 +48,7 @@ class Context {
 
 
 /**
- * The type of a filter function used in a [annotations.Procedure] annotation.
+ * The type of a filter function used in a [annotations.IrisProcedure] annotation.
  */
 typedef Future<bool> FilterFunction(Context context);
 
@@ -181,9 +183,9 @@ class Iris {
     var serviceFilters = [];
 
     // First check if the service has filters itself.
-    var serviceAnnotationInstanceMirror = reflectedServiceClass.metadata.firstWhere((InstanceMirror im) => im.type.isSubtypeOf(reflectClass(annotations.Service)), orElse: () => null);
+    var serviceAnnotationInstanceMirror = reflectedServiceClass.metadata.firstWhere((InstanceMirror im) => im.type.isSubtypeOf(reflectClass(annotations.IrisService)), orElse: () => null);
     if (serviceAnnotationInstanceMirror != null) {
-      annotations.Service serviceAnnotation = serviceAnnotationInstanceMirror.reflectee;
+      annotations.IrisService serviceAnnotation = serviceAnnotationInstanceMirror.reflectee;
       serviceFilters = serviceAnnotation.filters;
     }
 

@@ -4,7 +4,7 @@ import 'package:logging/logging.dart';
 import "iris_request_tests.dart" as requestTests;
 import "iris_tests.dart" as serviceDefinitionsTests;
 import "server_tests.dart" as serverTests;
-import "builder_tests.dart" as builderTests;
+import 'builder/all_tests.dart' as builderTests;
 import "filter_tests.dart" as filterTests;
 import "integration_tests.dart" as integrationTests;
 
@@ -16,8 +16,8 @@ main() {
 
   requestTests.main();
   serviceDefinitionsTests.main();
-  serverTests.main();
   builderTests.main();
+  serverTests.main();
   filterTests.main();
   integrationTests.main();
 

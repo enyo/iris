@@ -1,0 +1,29 @@
+package iris;
+
+enum IrisError {
+
+  /// Unable to communicate with remote service
+  IRIS_COMMUNICATION_ERROR = 900;
+  
+  /// Attempted to call a procedure which doesn't exist
+  IRIS_PROCEDURE_NOT_FOUND = 901;
+  
+  /// An unrecoverable error occurred on the server
+  IRIS_INTERNAL_SERVER_ERROR = 902;
+  
+  /// The service received an invalid protocol buffer
+  IRIS_INVALID_PB_MESSAGE_RECEIVED_BY_SERVICE = 910;
+  
+  /// The client received an invalid protocol buffer message
+  IRIS_INVALID_PB_MESSAGE_RECEIVED_BY_CLIENT = 911;
+  
+  /// When a required protocol buffer message was either sent or received
+  IRIS_REQUIRED_PB_MESSAGE_NOT_PROVIDED = 912;
+  
+  /// When a filter rejected the request
+  IRIS_REJECTED_BY_FILTER = 920;
+  
+  
+  /// User defined errors are extensions in the range 1000-9999.
+  extensions 1000-9999;
+}

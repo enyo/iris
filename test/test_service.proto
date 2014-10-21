@@ -1,0 +1,21 @@
+//import 'builder/google/descriptor.proto';
+//import 'builder/custom_options.proto';
+
+service FileService {
+  //option (compilation_unit) = "test/file/file_service.dart";
+  
+  rpc uploadFile(UploadFileRequest) returns (UploadFileResponse);
+}
+
+message File {
+  required string path = 1;
+}
+
+message UploadFileRequest {
+  optional string contentType = 1;
+}
+
+message UploadFileResponse {
+  optional string contentType = 2;
+  required string uploadPath = 3;
+}
