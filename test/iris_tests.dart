@@ -9,6 +9,7 @@ import "package:protobuf/protobuf.dart";
 
 import "../lib/remote/iris.dart";
 import "../lib/remote/annotations.dart" as anno;
+import 'dart:mirrors';
 
 
 
@@ -73,23 +74,23 @@ main() {
 
   group("Iris", () {
     test("addService() should throw InvalidServiceDefinition if return type is no Future<GeneratedMessage>", () {
-      var services = new Iris();
+      var services = new Iris(new TestServer());
       expect(() => services.addService(new NoGeneratedMessageRouteService()), throws);
     });
 
     test("addService() should throw InvalidServiceDefinition if accepted params are not Context and GeneratedMessage", () {
-      var services = new Iris();
+      var services = new Iris(new TestServer());
       expect(() => services.addService(new WrongParamsRouteService()), throws);
     });
 
     test("addService() properly detects all procedures", () {
-      var services = new Iris();
+      var services = new Iris(new TestServer());
       services.addService(new TestService());
       services.procedures.first.invoke(new TestContext(), new TestRequest());
     });
 
     test("addService() finds all filters on procedures", () {
-      var services = new Iris();
+      var services = new Iris(new TestServer());
       services.addService(new TestService());
       expect(services.procedures.length, equals(2));
       expect(services.procedures.last.filterFunctions.length, equals(2));
@@ -98,7 +99,7 @@ main() {
     });
 
     test("addService() finds all filters on service and procedures and combines them", () {
-      var services = new Iris();
+      var services = new Iris(new TestServer());
       services.addService(new ServiceWithFilters());
       expect(services.procedures.length, equals(2));
 
@@ -109,53 +110,61 @@ main() {
       expect(services.procedures.last.filterFunctions, equals([serviceFilterFunc, filterFunc1, filterFunc2]));
     });
 
-    test("addService() throws if a server has already been set", () {
-      var services = new Iris();
-      services.addService(new TestService());
-      services.addServer(new TestServer());
-      expect(() => services.addService(new TestService()), throws);
-    });
+    test("start() calls start() on the server and returns the Future from it", () {
+      var server = new TestServer();
 
-    test("addServer() throws if no procedure has been added yet", (){
-      var services = new Iris();
-      expect(() => services.addServer(new TestServer()), throws);
-    });
+      var services = new Iris(server);
 
-
-    test("start() calls start() on all servers and resolves Future when all are done", () {
-      var services = new Iris();
       services.addService(new TestService());
 
-      var server1 = new TestServer();
-      var server2 = new TestServer();
+      var future = new Future.value();
+      server.when(callsTo("start")).alwaysReturn(future);
 
-      services
-          ..addServer(server1)
-          ..addServer(server2);
+      expect(server.calls("start").logs.length, equals(0));
 
-      server1.when(callsTo("start")).alwaysReturn(new Future.value());
+      var returnedFuture = services.startServer();
 
-      var server2Completer = new Completer();
+      expect(future, equals(returnedFuture));
 
-      server2.when(callsTo("start")).alwaysReturn(server2Completer.future);
+      expect(server.calls("start").logs.length, equals(1));
 
-      expect(server1.calls("start").logs.length, equals(0));
-      expect(server2.calls("start").logs.length, equals(0));
+    });
 
-      var allFinished = false;
-      var finished = services.startServers();
+    test("Iris forwards the prefix parameter to the services", () {
+      var server = new TestServer();
 
-      finished.whenComplete(expectAsync(() => expect(allFinished, equals(true))));
+      var services = new Iris(server, prefix: 'api/beta');
 
-      expect(server1.calls("start").logs.length, equals(1));
-      expect(server2.calls("start").logs.length, equals(1));
+      services.addService(new TestService());
 
-      new Timer(new Duration(milliseconds: 100), () {
-        allFinished = true;
-        server2Completer.complete();
-      });
+      services.procedures.firstWhere((procedure) => procedure.path == '/api/beta/TestService.create');
 
+    });
 
+    test("ServiceProcedure handles prefixes with or without leading/trailing slash", () {
+      MethodMirror;
+      var testService = new TestService();
+
+      InstanceMirror classInstanceMirror = reflect(testService);
+      ClassMirror myClassMirror = classInstanceMirror.type;
+      MethodMirror methodMirror = myClassMirror.instanceMembers[new Symbol("create")];
+
+      var procedure;
+
+      procedure = new ServiceProcedure(testService, 'api', methodMirror, null, null, null);
+      expect(procedure.path, equals('/api/TestService.create'));
+
+      procedure = new ServiceProcedure(testService, '/api', methodMirror, null, null, null);
+      expect(procedure.path, equals('/api/TestService.create'));
+
+      procedure = new ServiceProcedure(testService, 'api/', methodMirror, null, null, null);
+      expect(procedure.path, equals('/api/TestService.create'));
+
+      procedure = new ServiceProcedure(testService, 'api/v1.4', methodMirror, null, null, null);
+      expect(procedure.path, equals('/api/v1.4/TestService.create'));
+
+      procedure = new ServiceProcedure(testService, '/api/v1.4/', methodMirror, null, null, null);
+      expect(procedure.path, equals('/api/v1.4/TestService.create'));
     });
 
   });

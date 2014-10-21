@@ -116,9 +116,8 @@ Future<MyContext> contextInitializer(remote.IrisRequest req) {
 }
 
 remote.Iris getServices() {
-  return new remote.Iris(contextInitializer)
-        ..addService(new UserService())
-        ..addServer(new remote.HttpIrisServer("localhost", PORT, allowOrigins: const["http://127.0.0.1:3030"]));
+  return new remote.Iris(new remote.IrisHttpServer("localhost", PORT, allowOrigins: const["http://127.0.0.1:3030"]), contextInitializer: contextInitializer)
+        ..addService(new UserService());
 }
 
 class ClientUserService extends client_lib.Service {
@@ -166,11 +165,11 @@ main() {
 
 
   setUp(() {
-    return services.startServers();
+    return services.startServer();
   });
 
   tearDown(() {
-    return services.stopServers();
+    return services.stopServer();
   });
 
   group("Integration", () {

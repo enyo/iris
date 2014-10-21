@@ -51,7 +51,7 @@ main() {
                                 "https://www.google.com",
                                 ];
 
-      var server = new HttpIrisServer("", 12344, allowOrigins: allowOrigins);
+      var server = new IrisHttpServer("", 12344, allowOrigins: allowOrigins);
 
       var req = new MockReq();
       req.headers.add("origin", "http://localhost:11122");
