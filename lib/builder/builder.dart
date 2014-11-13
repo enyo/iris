@@ -43,6 +43,22 @@ class BuilderException implements Exception {
 
 
 /**
+ * Returns a [BuildArgs] object for given arguments.
+ */
+BuildArgs getBuildArgs(List<String> args, String pbMessagesManifest, {String servicesDirectory}) {
+  if (args == null) {
+    log.warning("No build arguments provided. Defaulting to `--full`");
+    args = ['--full'];
+  }
+
+  var buildArgs = new BuildArgs(args, directoriesToWatch: [ path.dirname(pbMessagesManifest), servicesDirectory ]);
+
+  return buildArgs;
+}
+
+
+
+/**
  * Compile the remote services to be used by the client.
  *
  * **If you put this function in the `build.dart` file then you need to pass
@@ -80,20 +96,13 @@ Future build(Iris serviceDefinitions, String targetDirectory, String pbMessagesM
     args = ['--full'];
   }
 
-  var argsBuilder = new _BuildArgs(args, directoriesToWatch: [ path.dirname(pbMessagesManifest), servicesDirectory ]);
-
-  var doClean = argsBuilder.clean;
-  var doBuild = argsBuilder.full;
-
-  if (!argsBuilder.changed.isEmpty || !argsBuilder.removed.isEmpty) {
-    log.info("Found changed or deleted files. Building remote services now.");
-    doBuild = true;
-  }
+  var buildArgs = getBuildArgs(args, pbMessagesManifest, servicesDirectory: servicesDirectory);
 
   return _async.then((_) {
-    if (doClean) return cleanTargetDirectory(targetDirectory);
+    if (buildArgs.clean) return cleanTargetDirectory(targetDirectory);
   }).then((_) {
-    if (doBuild) {
+    if (buildArgs.requiresBuild) {
+      log.info("Found changed or deleted files or --full flag was passed. Building remote services now.");
 
       var targetDir = new Directory(targetDirectory);
 

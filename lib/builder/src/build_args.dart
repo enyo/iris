@@ -6,7 +6,7 @@ final Pattern _CHANGED_PATTERN = new RegExp(r'--changed=(.*\.dart)$');
 
 
 
-class _BuildArgs {
+class BuildArgs {
 
   final Set<String> removed = new Set<String>();
 
@@ -22,7 +22,7 @@ class _BuildArgs {
   List<String> directoriesToWatch;
 
 
-  _BuildArgs(List<String> args, {this.directoriesToWatch: const []}) {
+  BuildArgs(List<String> args, {this.directoriesToWatch: const []}) {
 
     if (args.any((arg) => arg.startsWith('--machine')))
       machineOut = true;
@@ -57,4 +57,17 @@ class _BuildArgs {
     }
 
   }
+
+
+  /// Returns true if the build args require a rebuild of iris
+  bool get requiresBuild {
+    var requiresBuild = full;
+
+    if (!changed.isEmpty || !removed.isEmpty) {
+      requiresBuild = true;
+    }
+
+    return requiresBuild;
+  }
+
 }
