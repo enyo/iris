@@ -13,12 +13,14 @@ import 'dart:mirrors';
 
 
 
-class TestRequest implements GeneratedMessage { }
-class TestResponse implements GeneratedMessage { }
-class TestContext implements Context { }
+class TestRequest implements GeneratedMessage { noSuchMethod(Invocation invocation) => null; }
+class TestResponse implements GeneratedMessage { noSuchMethod(Invocation invocation) => null; }
+class TestContext implements Context { noSuchMethod(Invocation invocation) => null; }
 
 
 class TestServer extends Mock implements IrisServer {
+
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 
 }
 

@@ -33,4 +33,6 @@ main() {
 @proxy
 class MockHttpRequest extends Mock implements HttpRequest {
 
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+
 }

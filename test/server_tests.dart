@@ -17,11 +17,15 @@ class MockReq extends Mock implements HttpRequest {
 
   HttpHeaders headers = new MockHeaders();
 
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+
 }
 
 class MockRes extends Mock implements HttpResponse {
 
   HttpHeaders headers = new MockHeaders();
+
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 
 }
 
@@ -37,6 +41,8 @@ class MockHeaders extends Mock implements HttpHeaders {
   List<String> operator [](String name) {
     return [data[name]];
   }
+
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 
 }
 
