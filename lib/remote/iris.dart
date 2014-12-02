@@ -20,13 +20,13 @@ import "../src/error_message.dart";
 
 part "src/exceptions.dart";
 part "src/server.dart";
-part "src/service.dart";
+part "src/remote.dart";
 
 
 
 
 
-Logger log = new Logger("RemoteServices");
+Logger log = new Logger("Remotes");
 
 
 
@@ -34,8 +34,7 @@ Logger log = new Logger("RemoteServices");
  * The base class for context classes. Every procedure gets an instance of this
  * class (or a subclass of it) as first parameter when invoked.
  *
- * You can define your own context class by calling
- * [RemoteServices.setContextInitializer].
+ * You can define your own context class by providing it in the [Iris] constructor.
  */
 class Context {
 
@@ -60,14 +59,14 @@ typedef Future<Context> ContextInitializer(IrisRequest req);
 
 
 /**
- * Holds all necessary information to invoke a procedure on a [Service].
+ * Holds all necessary information to invoke a procedure on a [Remote].
  *
- * You can create [ServiceProcedure]s by calling [ServiceDefinitions.addService].
+ * You can create [RemoteProcedure]s by calling [Iris.addRemote].
  */
-class ServiceProcedure {
+class RemoteProcedure {
 
-  /// The instance of the service this procedure will be called on.
-  final Service service;
+  /// The instance of the remote this procedure will be called on.
+  final Remote remote;
 
   /// The prefix used in the path
   final String prefix;
@@ -86,7 +85,7 @@ class ServiceProcedure {
 
 
 
-  ServiceProcedure(this.service, this.prefix, this.method, this.expectedRequestType, this.responseType, this.filterFunctions);
+  RemoteProcedure(this.remote, this.prefix, this.method, this.expectedRequestType, this.responseType, this.filterFunctions);
 
 
   /**
@@ -107,9 +106,9 @@ class ServiceProcedure {
 
   /// Returns the generated path for this procedure. Either to be used as HTTP path
   /// or as name for sockets.
-  String get path => "$_formattedPrefix$serviceName.$methodName";
+  String get path => "$_formattedPrefix$remoteName.$methodName";
 
-  String get serviceName => service.runtimeType.toString();
+  String get remoteName => remote.runtimeType.toString();
 
   String get methodName => MirrorSystem.getName(method.simpleName);
 
@@ -121,7 +120,7 @@ class ServiceProcedure {
     List params = [];
     params.add(context); // I put this on a separate line because otherwise there was a type warning.
     if (expectedRequestType != null) params.add(requestMessage);
-    return reflect(service).invoke(method.simpleName, params).reflectee;
+    return reflect(remote).invoke(method.simpleName, params).reflectee;
   }
 
 }
@@ -148,8 +147,8 @@ class Iris {
   Future<Context> _defaultContextInitializer(IrisRequest req) => new Future.value(new Context(req));
 
 
-  /// The list of all [ServiceProcedure]s available.
-  List<ServiceProcedure> procedures = [];
+  /// The list of all [RemoteProcedure]s available.
+  List<RemoteProcedure> procedures = [];
 
   /// The request handler for this iris instance.
   final IrisRequestHandler requestHandler;
@@ -168,27 +167,27 @@ class Iris {
   Iris(this.requestHandler, {contextInitializer: null, this.prefix: "/"}) : _contextInitializer = contextInitializer {
     requestHandler._contextInitializer = contextInitializer;
 
-    // Will be populated every time [addService] is called
+    /// Will be populated every time [addRemote] is called
     requestHandler._procedures = procedures;
   }
 
   /**
-   * Checks the service, and creates a list of [ServiceProcedure]s for every
-   * [Procedure] found in the service.
+   * Checks the remote, and creates a list of [RemoteProcedure]s for every
+   * [Procedure] found in the remote.
    */
-  addService(Service service) {
-    var reflectedServiceClass = reflectClass(service.runtimeType);
-    var serviceFilters = [];
+  addRemote(Remote remote) {
+    var reflectedRemoteClass = reflectClass(remote.runtimeType);
+    var remoteFilters = [];
 
-    // First check if the service has filters itself.
-    var serviceAnnotationInstanceMirror = reflectedServiceClass.metadata.firstWhere((InstanceMirror im) => im.type.isSubtypeOf(reflectClass(annotations.Service)), orElse: () => null);
-    if (serviceAnnotationInstanceMirror != null) {
-      annotations.Service serviceAnnotation = serviceAnnotationInstanceMirror.reflectee;
-      serviceFilters = serviceAnnotation.filters;
+    // First check if the remote has filters itself.
+    var remoteAnnotationInstanceMirror = reflectedRemoteClass.metadata.firstWhere((InstanceMirror im) => im.type.isSubtypeOf(reflectClass(annotations.Remote)), orElse: () => null);
+    if (remoteAnnotationInstanceMirror != null) {
+      annotations.Remote remoteAnnotation = remoteAnnotationInstanceMirror.reflectee;
+      remoteFilters = remoteAnnotation.filters;
     }
 
 
-    for (var annotatedProcedure in annotation_crawler.annotatedDeclarations(annotations.Procedure, on: reflectedServiceClass)) {
+    for (var annotatedProcedure in annotation_crawler.annotatedDeclarations(annotations.Procedure, on: reflectedRemoteClass)) {
 
       if (annotatedProcedure.declaration is MethodMirror) {
         MethodMirror method = annotatedProcedure.declaration;
@@ -196,7 +195,7 @@ class Iris {
         annotations.Procedure annotation = annotatedProcedure.annotation;
 
         List filters = []
-            ..addAll(serviceFilters)
+            ..addAll(remoteFilters)
             ..addAll(annotation.filters);
 
         /// Now check that the method is actually of type [ProcedureMethod].
@@ -213,7 +212,7 @@ class Iris {
           if (method.returnType.qualifiedName != const Symbol("dart.async.Future") ||
               returnTypeMirror is! ClassMirror ||
               !returnTypeMirror.isSubtypeOf(reflectClass(GeneratedMessage))) {
-            throw new InvalidServiceDeclaration._("Every procedure needs to return a Future containing a GeneratedMessage.", service);
+            throw new InvalidRemoteDeclaration._("Every procedure needs to return a Future containing a GeneratedMessage.", remote);
           }
           else {
             returnType = returnTypeMirror.reflectedType;
@@ -224,14 +223,14 @@ class Iris {
         if (method.parameters.length < 1 || method.parameters.length > 2 ||
             !method.parameters.first.type.isSubtypeOf(reflectClass(Context)) ||
             (method.parameters.length == 2 && !method.parameters.last.type.isSubtypeOf(reflectClass(GeneratedMessage)))) {
-          throw new InvalidServiceDeclaration._("Every procedure needs to accept a Context and a GeneratedMessage object as parameters.", service);
+          throw new InvalidRemoteDeclaration._("Every procedure needs to accept a Context and a GeneratedMessage object as parameters.", remote);
         }
 
         var requestType = method.parameters.length == 2 ? method.parameters.last.type.reflectedType : null;
 
-        var serviceProcedure = new ServiceProcedure(service, prefix, method, requestType, returnType, filters);
-        log.fine("Found procedure ${serviceProcedure.methodName} on service ${serviceProcedure.serviceName}");
-        procedures.add(serviceProcedure);
+        var remoteProcedure = new RemoteProcedure(remote, prefix, method, requestType, returnType, filters);
+        log.fine("Found procedure ${remoteProcedure.methodName} on remote ${remoteProcedure.remoteName}");
+        procedures.add(remoteProcedure);
       }
     }
   }

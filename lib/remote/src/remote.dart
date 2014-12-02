@@ -1,7 +1,7 @@
 part of iris;
 
 /**
- * The signature of a procedure in a [Service].
+ * The signature of a procedure in a [Remote].
  */
 typedef Future<GeneratedMessage> ProcedureMethod(Context context, GeneratedMessage request);
 
@@ -11,6 +11,6 @@ typedef Future<GeneratedMessage> ProcedureMethod(Context context, GeneratedMessa
  *
  * For now this doesn't do anything.
  */
-class Service {
+class Remote {
 
 }

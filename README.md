@@ -5,7 +5,7 @@
 A complete abstraction of client ↔ server communication.
 
 It is basically a [remote procedure call](http://en.wikipedia.org/wiki/Remote_procedure_call)
-implementation in dart. You can call the methods on your services and get the
+implementation in dart. You can call the methods on your remotes and get the
 result back in futures without having to think about the communication.
 
 ## Usage
@@ -18,10 +18,10 @@ The typical setup is as follows:
 
 
 1. [Setup your server to generate protocol buffer messages](#setup-protocol-buffers)
-2. [Write your services & procedures](#write-services-on-server) that handle the
+2. [Write your procedures](#write-procedures-on-server) that handle the
    requests.
 3. [Create an iris object](#create-an-iris-object) that group your
-   services together and setup a server.
+   remotes together and setup a server.
 4. [Create a server binary](#create-a-server-binary) which you can then execute
    to start your iris server.
 5. [Setup the build.dart file](#setup-builddart) to generate the client library.
@@ -33,7 +33,7 @@ As you go along you will need more control over your configuration:
 - [Write a context initializer](#context-initializers) to add additional
   information (eg: session information) to the `Context` received by *filters*
   and *procedures*.
-- [Write filters for your services and procedures](#filters) to reject requests
+- [Write filters for your remotes and procedures](#filters) to reject requests
   on certain conditions (eg: **authentication**).
 - [Release the generated files as standalone library](#standalone-library)
 
@@ -42,7 +42,7 @@ As you go along you will need more control over your configuration:
 [Protocol buffers](http://en.wikipedia.org/wiki/Protocol_Buffers) are a method
 of serializing structured data. They are fast and performant, developed and
 used by *Google*, and are a great way to define the data being passed between
-services (in contrast to JSON where you have to take care of validating the data
+remotes (in contrast to JSON where you have to take care of validating the data
 yourself, and always need to look at the documentation to see what you actually
 receive).
 
@@ -54,12 +54,12 @@ Whenever a message in `iris` is sent or received, it is an instance
 of `GeneratedMessage`.
 
 
-### Write services on server
+### Write procedures on server
 
-Services basically are bundles of `Procedures`. If you have a service class
-named `UserService` with a *procedure* (a method on this class, with the
+Remotes basically are bundles of `Procedures`. If you have a remote class
+named `RemoteUser` with a *procedure* (a method on this class, with the
 `Procedure` annotation) named `create`, then you will be able to call this
-remote procedure from the client with `userService.create()`.
+remote procedure from the client with `remoteUser.create()`.
 
 Every *procedure* receives a `Context` as first parameter and *can* accept a
 `GeneratedMessage` (protocol buffer message) as a second parameter.  
@@ -68,10 +68,10 @@ add additional information to the `Context` object, see the
 [context initializers](#context-initializers) section.
 
 
-This is a simple *service* example:
+This is a simple *remote* example:
 
 ```dart
-class UserService extends Service {
+class RemoteUser extends Remote {
 
   /**
    * This procedure has both, a return type ([CreateUserResponse]) and an
@@ -113,18 +113,18 @@ object will be used to start the server, and to build the files for the client.
 Example `lib/iris.dart`:
 
 ```dart
-library service_definitions;
+library remote_definitions;
 
 import "package:iris/remote/iris.dart";
 
-// This is the file that contains all your services
-import "services/services.dart";
+// This is the file that contains all your remotes
+import "remotes/remotes.dart";
 
 Iris getIris() {
   return new Iris()
-        // Add the services you want to be served
-        ..addService(new UserService())
-        ..addService(new AuthenticationService())
+        // Add the remotes you want to be served
+        ..addRemote(new RemoteUser())
+        ..addRemote(new RemoteAuthentication())
         // Add the servers you want to use
         ..addServer(new HttpIrisServer("localhost", 8088, allowOrigins: const ['http://127.0.0.1:3030']));
 }
@@ -149,10 +149,10 @@ main() {
 
 ### Setup build.dart
 
-Now everything on your server is ready! The services are served automatically
+Now everything on your server is ready! The remotes are served automatically
 and are listening for incoming requests.
 
-To use these remote services on the client, `iris` generates a library
+To use these remotes on the client, `iris` generates a library
 to be used on the client. This allows you to have completely typed classes that
 you can use, with autocompletion and request / return types.
 
@@ -167,21 +167,21 @@ import 'package:iris/builder/builder.dart' as iris_builder;
 import "lib/iris.dart";
 
 
-const IRIS_TARGET = "lib/client_services";
+const IRIS_TARGET = "lib/client_remotes";
 
 const IRIS_PROTO_BUFFER_MESSAGES = "lib/proto/messages.dart";
 
-const IRIS_SERVICES_DIR = "lib/services/";
+const IRIS_REMOTES_DIR = "lib/remotes/";
 
 void main(List<String> args) {
 
-  iris_builder.build(getIris(), IRIS_TARGET, IRIS_PROTO_BUFFER_MESSAGES, args: args, includePbMessages: true, servicesDirectory: IRIS_SERVICES_DIR);
+  iris_builder.build(getIris(), IRIS_TARGET, IRIS_PROTO_BUFFER_MESSAGES, args: args, includePbMessages: true, remotesDirectory: IRIS_REMOTES_DIR);
 
 }
 ```
 
 The builder will now rebuild your client library every time either your protocol
-buffer messages or your services (only if you specify `servicesDirectory`) change.
+buffer messages or your remotes (only if you specify `remotesDirectory`) change.
 
 See the [standalone library](#standalone-library) section for more information
 on how to setup your `build.dart` file to create a standalone library that can
@@ -192,19 +192,19 @@ be distributed separately.
 `Iris` provides two types of client libraries: one is meant to be
 used on a server, and one for the browser.
 
-Here's an example of using the remote services in a browser:
+Here's an example of using the remotes in a browser:
 
 ```dart
 import "package:iris/client/browser_http_client.dart";
 
 // This includes your generated library
-import "package:my-generated-lib/services.dart";
+import "package:my-generated-lib/remotes.dart";
 
 main() {
   var client = new HttpIrisClient(Uri.parse("http://localhost:8088"));
 
-  // Create an instance of your services
-  var services = new Services(client);
+  // Create an instance of your remotes
+  var remotes = new Remotes(client);
 
   // And you're good to go!
 
@@ -212,7 +212,7 @@ main() {
       ..email = "e@mail.com"
       ..password = "password";
 
-  services.userService.auth(req).then((User user) => doSomething(user));
+  remotes.remoteUser.auth(req).then((User user) => doSomething(user));
 
 }
 ```
@@ -221,7 +221,7 @@ main() {
 
 ### Error codes
 
-If an error occurs anywhere in a remote service request you **always**
+If an error occurs anywhere in a remote request you **always**
 get an `IrisException` on the client. This `IrisException` has an
 `errorCode` and an `internalMessage`.
 
@@ -229,7 +229,7 @@ get an `IrisException` on the client. This `IrisException` has an
 > or inspected by developers.
 
 `errorCode`s are all you need to tell the client what's wrong. Every time you
-encounter a problem in your service, think about what you want to tell the client
+encounter a problem in your remote, think about what you want to tell the client
 and create an error code for it.
 
 This is how you setup error codes on the server:
@@ -249,7 +249,7 @@ class ErrorCode extends IrisErrorCode {
 and this is how you would throw an error code in a *procedure*:
 
 ```dart
-class UserService extends Service {
+class RemoteUser extends Remote {
 
   @Procedure()
   Future create(MyContext context) {
@@ -262,7 +262,7 @@ class UserService extends Service {
 on your client:
 
 ```dart
-services.userService.create().then(print)
+remotes.remoteUser.create().then(print)
     .catchError((IrisException ex) {
       if (ex.errorCode == ErrorCode.INVALID_EMAIL) {
         alert("Please provide a valid email address");
@@ -331,10 +331,10 @@ Future<MyContext> myContextInitializer(IrisRequest req) {
 
 
 Iris getIris() {
-  // And where you create you service definitions, you now pass the context
+  // And where you create you remote definitions, you now pass the context
   // initializer
   return new Iris(myContextInitializer)
-      ..addService(UserService)
+      ..addRemote(RemoteUser)
       ..etc...
 }
 ```
@@ -347,14 +347,14 @@ So, every time you receive a `Context` object, it is now a `MyContext` instance.
 
 Often you need your procedures to be filtered, for example if you need authentication.
 
-Filters are defined with the `Service` or the `Procedure` annotation and this is
+Filters are defined with the `Remote` or the `Procedure` annotation and this is
 their `typedef`:
 
 ```dart
 typedef Future<bool> FilterFunction(Context context);
 ```
 
-You can define filters in your service like this:
+You can define filters in your remote like this:
 
 
 ```dart
@@ -369,9 +369,9 @@ Future<bool> adminRightsFilter(Context context) {
 }
 
 
-/// All procedures in this service will have the `authenticationFilter`.
-@Service(filters: const [authenticationFilter])
-class UserService extends Service {
+/// All procedures in this remote will have the `authenticationFilter`.
+@Remote(filters: const [authenticationFilter])
+class RemoteUser extends Remote {
 
   /// In addition to the `authenticationFilter` this procedure also has the
   /// `adminRightsFilter`.
@@ -388,19 +388,19 @@ code, then you can use the `ProcedureException` for that.
 > After the `ContextInitializer` function, all defined filters will be called
 > **sequentially and in the defined order** and processing the request is
 > immediately stopped when one filter returns `false`.  
-> **Service filters are always the first filters to run.**
+> **Remote filters are always the first filters to run.**
 
 If you have set a `ContextInitializer` all filter functions will receive the
 context returned by this function.
 
 ### Standalone library
 
-There are two ways you can distribute your remote services:
+There are two ways you can distribute your remote remotes:
 
 1. As part of your server library
 2. As a separate, standalone library
 
-Releasing the remote services as part of your library is easier. You can just
+Releasing the remotes as part of your library is easier. You can just
 let the build script create the necessary client files in your `lib/` directory,
 and users can use your server as a dependency, and import the generated *iris*
 files. This means that the user has access to your protocol buffer and

@@ -21,7 +21,7 @@ abstract class IrisErrorCode {
 
   final int value;
 
-  /// Unable to communicate with the remote service.
+  /// Unable to communicate with the remote.
   static const IRIS_COMMUNICATION_ERROR = const _InternalErrorCode._(900);
 
   /// Whenever an attempt to call a procedure that doesn't exist is made.
@@ -32,8 +32,8 @@ abstract class IrisErrorCode {
 
 
 
-  /// When the service received an invalid protocol buffer message
-  static const IRIS_INVALID_PB_MESSAGE_RECEIVED_BY_SERVICE = const _InternalErrorCode._(910);
+  /// When the remote received an invalid protocol buffer message
+  static const IRIS_INVALID_PB_MESSAGE_RECEIVED_BY_REMOTE = const _InternalErrorCode._(910);
 
   /// When the client received an invalid protocol buffer message
   static const IRIS_INVALID_PB_MESSAGE_RECEIVED_BY_CLIENT = const _InternalErrorCode._(911);

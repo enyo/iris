@@ -25,11 +25,11 @@ class TestServer extends Mock implements IrisServer {
 }
 
 
-Future serviceFilterFunc(Context context) => new Future.value();
+Future remoteFilterFunc(Context context) => new Future.value();
 Future filterFunc1(Context context) => new Future.value();
 Future filterFunc2(Context context) => new Future.value();
 
-class TestService extends Service {
+class RemoteTest extends Remote {
 
   @anno.Procedure()
   Future<TestResponse> create(Context context, TestRequest req) => null;
@@ -41,8 +41,8 @@ class TestService extends Service {
 }
 
 
-@anno.Service(filters: const [serviceFilterFunc])
-class ServiceWithFilters extends Service {
+@anno.Remote(filters: const [remoteFilterFunc])
+class RemoteWithFilters extends Remote {
 
   @anno.Procedure()
   Future<TestResponse> noFilter(Context context, TestRequest req) => null;
@@ -53,7 +53,7 @@ class ServiceWithFilters extends Service {
 }
 
 
-class NoGeneratedMessageRouteService extends Service {
+class NoGeneratedMessageRouteRemote extends Remote {
 
   @anno.Procedure()
   Future<String> create(Context context, TestRequest req) => null;
@@ -61,7 +61,7 @@ class NoGeneratedMessageRouteService extends Service {
 }
 
 
-class WrongParamsRouteService extends Service {
+class WrongParamsRouteRemote extends Remote {
 
   @anno.Procedure()
   Future<TestResponse> create(TestRequest req, Context context) => null;
@@ -75,56 +75,56 @@ class WrongParamsRouteService extends Service {
 main() {
 
   group("Iris", () {
-    test("addService() should throw InvalidServiceDefinition if return type is no Future<GeneratedMessage>", () {
-      var services = new Iris(new TestServer());
-      expect(() => services.addService(new NoGeneratedMessageRouteService()), throws);
+    test("addRemote() should throw InvalidRemoteDefinition if return type is no Future<GeneratedMessage>", () {
+      var remotes = new Iris(new TestServer());
+      expect(() => remotes.addRemote(new NoGeneratedMessageRouteRemote()), throws);
     });
 
-    test("addService() should throw InvalidServiceDefinition if accepted params are not Context and GeneratedMessage", () {
-      var services = new Iris(new TestServer());
-      expect(() => services.addService(new WrongParamsRouteService()), throws);
+    test("addRemote() should throw InvalidRemoteDefinition if accepted params are not Context and GeneratedMessage", () {
+      var remotes = new Iris(new TestServer());
+      expect(() => remotes.addRemote(new WrongParamsRouteRemote()), throws);
     });
 
-    test("addService() properly detects all procedures", () {
-      var services = new Iris(new TestServer());
-      services.addService(new TestService());
-      services.procedures.first.invoke(new TestContext(), new TestRequest());
+    test("addRemote() properly detects all procedures", () {
+      var remotes = new Iris(new TestServer());
+      remotes.addRemote(new RemoteTest());
+      remotes.procedures.first.invoke(new TestContext(), new TestRequest());
     });
 
-    test("addService() finds all filters on procedures", () {
-      var services = new Iris(new TestServer());
-      services.addService(new TestService());
-      expect(services.procedures.length, equals(2));
-      expect(services.procedures.last.filterFunctions.length, equals(2));
-      expect(services.procedures.last.filterFunctions.first, equals(filterFunc1));
-      expect(services.procedures.last.filterFunctions.last, equals(filterFunc2));
+    test("addRemote() finds all filters on procedures", () {
+      var remotes = new Iris(new TestServer());
+      remotes.addRemote(new RemoteTest());
+      expect(remotes.procedures.length, equals(2));
+      expect(remotes.procedures.last.filterFunctions.length, equals(2));
+      expect(remotes.procedures.last.filterFunctions.first, equals(filterFunc1));
+      expect(remotes.procedures.last.filterFunctions.last, equals(filterFunc2));
     });
 
-    test("addService() finds all filters on service and procedures and combines them", () {
-      var services = new Iris(new TestServer());
-      services.addService(new ServiceWithFilters());
-      expect(services.procedures.length, equals(2));
+    test("addRemote() finds all filters on remote and procedures and combines them", () {
+      var remotes = new Iris(new TestServer());
+      remotes.addRemote(new RemoteWithFilters());
+      expect(remotes.procedures.length, equals(2));
 
-      expect(services.procedures.first.filterFunctions.length, equals(1));
-      expect(services.procedures.first.filterFunctions.first, equals(serviceFilterFunc));
+      expect(remotes.procedures.first.filterFunctions.length, equals(1));
+      expect(remotes.procedures.first.filterFunctions.first, equals(remoteFilterFunc));
 
-      expect(services.procedures.last.filterFunctions.length, equals(3));
-      expect(services.procedures.last.filterFunctions, equals([serviceFilterFunc, filterFunc1, filterFunc2]));
+      expect(remotes.procedures.last.filterFunctions.length, equals(3));
+      expect(remotes.procedures.last.filterFunctions, equals([remoteFilterFunc, filterFunc1, filterFunc2]));
     });
 
     test("start() calls start() on the server and returns the Future from it", () {
       var server = new TestServer();
 
-      var services = new Iris(server);
+      var iris = new Iris(server);
 
-      services.addService(new TestService());
+      iris.addRemote(new RemoteTest());
 
       var future = new Future.value();
       server.when(callsTo("start")).alwaysReturn(future);
 
       expect(server.calls("start").logs.length, equals(0));
 
-      var returnedFuture = services.startServer();
+      var returnedFuture = iris.startServer();
 
       expect(future, equals(returnedFuture));
 
@@ -132,41 +132,41 @@ main() {
 
     });
 
-    test("Iris forwards the prefix parameter to the services", () {
+    test("Iris forwards the prefix parameter to the remotes", () {
       var server = new TestServer();
 
-      var services = new Iris(server, prefix: 'api/beta');
+      var iris = new Iris(server, prefix: 'api/beta');
 
-      services.addService(new TestService());
+      iris.addRemote(new RemoteTest());
 
-      services.procedures.firstWhere((procedure) => procedure.path == '/api/beta/TestService.create');
+      iris.procedures.firstWhere((procedure) => procedure.path == '/api/beta/RemoteTest.create');
 
     });
 
-    test("ServiceProcedure handles prefixes with or without leading/trailing slash", () {
+    test("RemoteProcedure handles prefixes with or without leading/trailing slash", () {
       MethodMirror;
-      var testService = new TestService();
+      var testRemote = new RemoteTest();
 
-      InstanceMirror classInstanceMirror = reflect(testService);
+      InstanceMirror classInstanceMirror = reflect(testRemote);
       ClassMirror myClassMirror = classInstanceMirror.type;
       MethodMirror methodMirror = myClassMirror.instanceMembers[new Symbol("create")];
 
       var procedure;
 
-      procedure = new ServiceProcedure(testService, 'api', methodMirror, null, null, null);
-      expect(procedure.path, equals('/api/TestService.create'));
+      procedure = new RemoteProcedure(testRemote, 'api', methodMirror, null, null, null);
+      expect(procedure.path, equals('/api/RemoteTest.create'));
 
-      procedure = new ServiceProcedure(testService, '/api', methodMirror, null, null, null);
-      expect(procedure.path, equals('/api/TestService.create'));
+      procedure = new RemoteProcedure(testRemote, '/api', methodMirror, null, null, null);
+      expect(procedure.path, equals('/api/RemoteTest.create'));
 
-      procedure = new ServiceProcedure(testService, 'api/', methodMirror, null, null, null);
-      expect(procedure.path, equals('/api/TestService.create'));
+      procedure = new RemoteProcedure(testRemote, 'api/', methodMirror, null, null, null);
+      expect(procedure.path, equals('/api/RemoteTest.create'));
 
-      procedure = new ServiceProcedure(testService, 'api/v1.4', methodMirror, null, null, null);
-      expect(procedure.path, equals('/api/v1.4/TestService.create'));
+      procedure = new RemoteProcedure(testRemote, 'api/v1.4', methodMirror, null, null, null);
+      expect(procedure.path, equals('/api/v1.4/RemoteTest.create'));
 
-      procedure = new ServiceProcedure(testService, '/api/v1.4/', methodMirror, null, null, null);
-      expect(procedure.path, equals('/api/v1.4/TestService.create'));
+      procedure = new RemoteProcedure(testRemote, '/api/v1.4/', methodMirror, null, null, null);
+      expect(procedure.path, equals('/api/v1.4/RemoteTest.create'));
     });
 
   });

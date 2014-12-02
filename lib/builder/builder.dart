@@ -1,4 +1,4 @@
-library remote_services_builder;
+library remotes_builder;
 
 import "dart:io";
 import "dart:mirrors";
@@ -10,9 +10,8 @@ import '../remote/iris.dart';
 
 import '../remote/error_code.dart';
 
-part 'src/utils.dart';
 part 'src/manifest.dart';
-part 'src/service.dart';
+part 'src/remote.dart';
 part 'src/build_args.dart';
 part 'src/error_codes.dart';
 
@@ -24,11 +23,11 @@ String generatedNotice = """///
 """;
 
 
-Logger log = new Logger("RemoteServicesBuilder");
+Logger log = new Logger("RemotesBuilder");
 
 
 /**
- * Thrown when there was a problemen with the services definition.
+ * Thrown when there was a problemen with the remotes definition.
  */
 class BuilderException implements Exception {
 
@@ -45,13 +44,13 @@ class BuilderException implements Exception {
 /**
  * Returns a [BuildArgs] object for given arguments.
  */
-BuildArgs getBuildArgs(List<String> args, String pbMessagesManifest, {String servicesDirectory}) {
+BuildArgs getBuildArgs(List<String> args, String pbMessagesManifest, {String remotesDirectory}) {
   if (args == null) {
     log.warning("No build arguments provided. Defaulting to `--full`");
     args = ['--full'];
   }
 
-  var buildArgs = new BuildArgs(args, directoriesToWatch: [ path.dirname(pbMessagesManifest), servicesDirectory ]);
+  var buildArgs = new BuildArgs(args, directoriesToWatch: [ path.dirname(pbMessagesManifest), remotesDirectory ]);
 
   return buildArgs;
 }
@@ -59,13 +58,13 @@ BuildArgs getBuildArgs(List<String> args, String pbMessagesManifest, {String ser
 
 
 /**
- * Compile the remote services to be used by the client.
+ * Compile the remotes to be used by the client.
  *
  * **If you put this function in the `build.dart` file then you need to pass
  * the [args] parameter!** Otherwise those files will be rebuilt every time
  * *any* file in the project changes which can potentially end up in an infinite
  * loop.
- * You will porbably also set the [servicesDirectory] which tells the builder
+ * You will porbably also set the [remotesDirectory] which tells the builder
  * where to look for changes.
  * The protocol buffer messages directory is only watched if [includePbMessages]
  * is true (since otherwise the lib doesn't need to rebuild).
@@ -78,7 +77,7 @@ BuildArgs getBuildArgs(List<String> args, String pbMessagesManifest, {String ser
  *
  * [includePbMessages] defines whether you want all protocol buffer messages to
  * be copied over to the target directory as well. This is useful if you want
- * to make your remote services public but not the whole server.
+ * to make your remotes public but not the whole server.
  *
  * Setting [errorCodes] creates a `error_code.dart` file that the client can
  * import to handle error codes properly.
@@ -86,9 +85,9 @@ BuildArgs getBuildArgs(List<String> args, String pbMessagesManifest, {String ser
  * If [args] are provided, then it will be looked for "--changed" and "--removed"
  * arguments, and the build will only be done dependent on that information.
  */
-Future build(Iris serviceDefinitions, String targetDirectory, String pbMessagesManifest, {List<String> args, bool includePbMessages: false, String servicesFileName: "services.dart", String servicesDirectory, Type errorCodes}) {
+Future build(Iris remoteDefinitions, String targetDirectory, String pbMessagesManifest, {List<String> args, bool includePbMessages: false, String remotesFileName: "remotes.dart", String remotesDirectory, Type errorCodes}) {
   log.info("Running iris compiler");
-  log.info("Writing compiled services to: $targetDirectory");
+  log.info("Writing compiled remotes to: $targetDirectory");
   log.info("protobuffer Manifset: $pbMessagesManifest");
 
   if (args == null) {
@@ -96,13 +95,13 @@ Future build(Iris serviceDefinitions, String targetDirectory, String pbMessagesM
     args = ['--full'];
   }
 
-  var buildArgs = getBuildArgs(args, pbMessagesManifest, servicesDirectory: servicesDirectory);
+  var buildArgs = getBuildArgs(args, pbMessagesManifest, remotesDirectory: remotesDirectory);
 
   return _async.then((_) {
     if (buildArgs.clean) return cleanTargetDirectory(targetDirectory);
   }).then((_) {
     if (buildArgs.requiresBuild) {
-      log.info("Found changed or deleted files or --full flag was passed. Building remote services now.");
+      log.info("Found changed or deleted files or --full flag was passed. Building remotes now.");
 
       var targetDir = new Directory(targetDirectory);
 
@@ -111,11 +110,11 @@ Future build(Iris serviceDefinitions, String targetDirectory, String pbMessagesM
             if (!exists) return targetDir.create();
           })
           .then((_) {
-              log.info("Building iris services");
-              var compiledManifest = new CompiledManifest(targetDirectory, pbMessagesManifest, includePbMessages: includePbMessages, fileName: servicesFileName, errorCodes: errorCodes);
+              log.info("Building iris remotes");
+              var compiledManifest = new CompiledManifest(targetDirectory, pbMessagesManifest, includePbMessages: includePbMessages, fileName: remotesFileName, errorCodes: errorCodes);
 
-              for (var procedure in serviceDefinitions.procedures) {
-                compiledManifest.getOrCreateService(procedure.serviceName).procedures.add(procedure);
+              for (var procedure in remoteDefinitions.procedures) {
+                compiledManifest.getOrCreateRemote(procedure.remoteName).procedures.add(procedure);
               }
 
               return compiledManifest.build();

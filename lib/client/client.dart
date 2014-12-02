@@ -29,7 +29,7 @@ class IrisException implements Exception {
   IrisException(this.errorCode, [this.internalMessage]);
 
 
-  String toString() => "ServiceClientException with error code ${errorCode}." + (internalMessage == null ? "" : " Error: " + internalMessage);
+  String toString() => "IrisException with error code ${errorCode}." + (internalMessage == null ? "" : " Error: " + internalMessage);
 
 }
 
@@ -41,7 +41,7 @@ abstract class IrisClient {
 
 
   /**
-   * This is the method used to communicate with the remote service.
+   * This is the method used to communicate with the remote remote.
    */
   Future<GeneratedMessage> dispatch(String path, GeneratedMessage requestMessage, Function convertToMessage, [requiredRequestMessage = true]) {
     if (requiredRequestMessage) {
@@ -114,12 +114,12 @@ abstract class IrisClient {
 
 
 /**
- * A service on the client.
+ * A remote on the client.
  */
-abstract class Service {
+abstract class Remote {
 
   IrisClient client;
 
-  Service(IrisClient this.client);
+  Remote(IrisClient this.client);
 
 }

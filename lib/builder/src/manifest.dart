@@ -1,11 +1,11 @@
-part of remote_services_builder;
+part of remotes_builder;
 
 
 
 class CompiledManifest {
 
 
-  List<CompiledService> compiledServices = [];
+  List<CompiledRemote> compiledRemotes = [];
 
   String targetDirectory;
 
@@ -30,26 +30,26 @@ class CompiledManifest {
   CompiledManifest(this.targetDirectory, this.pbMessagesManifest, {this.includePbMessages, this.fileName, this.errorCodes});
 
 
-  CompiledService getOrCreateService(String serviceName) {
-    return compiledServices.firstWhere((service) => service.serviceName == serviceName,
+  CompiledRemote getOrCreateRemote(String remoteName) {
+    return compiledRemotes.firstWhere((remote) => remote.remoteName == remoteName,
         orElse: () {
-          var service = new CompiledService(serviceName, targetDirectory, relativePathToPbManifest);
-          compiledServices.add(service);
-          return service;
+          var remote = new CompiledRemote(remoteName, targetDirectory, relativePathToPbManifest);
+          compiledRemotes.add(remote);
+          return remote;
         });
   }
 
 
   /**
-   * Compiles the manifest and all its services, and writes it to the target directory.
+   * Compiles the manifest and all its remotes, and writes it to the target directory.
    */
   Future build() {
     var futures = [];
 
     futures.add(new File("${targetDirectory}/$fileName").writeAsString(compiledString));
 
-    for (var service in compiledServices) {
-      futures.add(service.build());
+    for (var remote in compiledRemotes) {
+      futures.add(remote.build());
     }
 
     if (includePbMessages) {
@@ -79,13 +79,13 @@ class CompiledManifest {
   }
 
 
-  String _getCompiledGetterForService(CompiledService service) {
-    var serviceName = service.serviceName,
-        lowerCaseServiceName = service.lowerCaseServiceName;
+  String _getCompiledGetterForRemote(CompiledRemote remote) {
+    var remoteName = remote.remoteName,
+        lowerCaseRemoteName = remote.lowerCaseRemoteName;
 
     var getter = "";
-    getter += "  $serviceName _$lowerCaseServiceName;\n";
-    getter += "  $serviceName get $lowerCaseServiceName => _$lowerCaseServiceName == null ? _$lowerCaseServiceName = new $serviceName(client) : _$lowerCaseServiceName;\n";
+    getter += "  $remoteName _$lowerCaseRemoteName;\n";
+    getter += "  $remoteName get $lowerCaseRemoteName => _$lowerCaseRemoteName == null ? _$lowerCaseRemoteName = new $remoteName(client) : _$lowerCaseRemoteName;\n";
     return getter;
   }
 
@@ -99,20 +99,20 @@ import "package:iris/client/client.dart";
 
 """;
 
-    for (var service in compiledServices) {
-      compiledString += """import "${service.fileName}";\n""";
+    for (var remote in compiledRemotes) {
+      compiledString += """import "${remote.fileName}";\n""";
     }
 
     compiledString += """
 
-class Services {
+class Remotes {
 
   IrisClient client;
-  Services(this.client);
+  Remotes(this.client);
 
 """;
 
-    compiledString += compiledServices.map((service) => _getCompiledGetterForService(service)).toList().join("\n");
+    compiledString += compiledRemotes.map((remote) => _getCompiledGetterForRemote(remote)).toList().join("\n");
 
     compiledString += "\n}\n";
 

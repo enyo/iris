@@ -40,7 +40,7 @@ class MyContext extends remote.Context {
 }
 
 
-class UserService extends remote.Service {
+class RemoteUser extends remote.Remote {
 
   @annotation.Procedure(filters: const [authFilter])
   Future<User> search(MyContext context, UserSearch req) {
@@ -115,34 +115,34 @@ Future<MyContext> contextInitializer(remote.IrisRequest req) {
   return new Future.value(context);
 }
 
-remote.Iris getServices() {
+remote.Iris getRemotes() {
   return new remote.Iris(new remote.IrisHttpServer("localhost", PORT, allowOrigins: const["http://127.0.0.1:3030"]), contextInitializer: contextInitializer)
-        ..addService(new UserService());
+        ..addRemote(new RemoteUser());
 }
 
-class ClientUserService extends client_lib.Service {
+class RemoteClientUser extends client_lib.Remote {
 
-  ClientUserService(client_lib.IrisClient client) : super(client);
+  RemoteClientUser(client_lib.IrisClient client) : super(client);
 
-  Future<User> search(UserSearch requestMessage) => client.dispatch('/UserService.search', requestMessage, (bytes) => new User.fromBuffer(bytes));
+  Future<User> search(UserSearch requestMessage) => client.dispatch('/RemoteUser.search', requestMessage, (bytes) => new User.fromBuffer(bytes));
 
-  Future<User> unauthorized(UserSearch requestMessage) => client.dispatch('/UserService.unauthorized', requestMessage, (bytes) => new User.fromBuffer(bytes));
+  Future<User> unauthorized(UserSearch requestMessage) => client.dispatch('/RemoteUser.unauthorized', requestMessage, (bytes) => new User.fromBuffer(bytes));
 
-  Future<User> throws(UserSearch requestMessage) => client.dispatch('/UserService.throws', requestMessage, (bytes) => new User.fromBuffer(bytes));
+  Future<User> throws(UserSearch requestMessage) => client.dispatch('/RemoteUser.throws', requestMessage, (bytes) => new User.fromBuffer(bytes));
 
-  Future throwsRandomException() => client.dispatch('/UserService.throwsRandomException', null, (bytes) => new User.fromBuffer(bytes), false);
+  Future throwsRandomException() => client.dispatch('/RemoteUser.throwsRandomException', null, (bytes) => new User.fromBuffer(bytes), false);
 
-  Future<User> notAnnotated(UserSearch requestMessage) => client.dispatch('/UserService.notAnnotated', requestMessage, (bytes) => new User.fromBuffer(bytes));
+  Future<User> notAnnotated(UserSearch requestMessage) => client.dispatch('/RemoteUser.notAnnotated', requestMessage, (bytes) => new User.fromBuffer(bytes));
 
-  Future<User> noMessage() => client.dispatch('/UserService.noMessage', null, (bytes) => new User.fromBuffer(bytes), false);
+  Future<User> noMessage() => client.dispatch('/RemoteUser.noMessage', null, (bytes) => new User.fromBuffer(bytes), false);
 
-  Future noReturnMessage(UserSearch requestMessage) => client.dispatch('/UserService.noReturnMessage', requestMessage, null);
+  Future noReturnMessage(UserSearch requestMessage) => client.dispatch('/RemoteUser.noReturnMessage', requestMessage, null);
 
-  Future noMessages() => client.dispatch('/UserService.noMessages', null, null, false);
+  Future noMessages() => client.dispatch('/RemoteUser.noMessages', null, null, false);
 
-  Future throwsProcedureException() => client.dispatch('/UserService.throwsProcedureException', null, null, false);
+  Future throwsProcedureException() => client.dispatch('/RemoteUser.throwsProcedureException', null, null, false);
 
-  Future filterThrows() => client.dispatch('/UserService.filterThrows', null, null, false);
+  Future filterThrows() => client.dispatch('/RemoteUser.filterThrows', null, null, false);
 
 }
 
@@ -158,23 +158,23 @@ class ErrorCode extends IrisErrorCode {
 
 main() {
 
-  var services = getServices();
+  var remotes = getRemotes();
 
   var client = new HttpIrisClient(Uri.parse("http://localhost:$PORT"));
-  var clientUserService = new ClientUserService(client);
+  var remoteClientUser = new RemoteClientUser(client);
 
 
   setUp(() {
-    return services.startServer();
+    return remotes.startServer();
   });
 
   tearDown(() {
-    return services.stopServer();
+    return remotes.stopServer();
   });
 
   group("Integration", () {
     test("methods without the Procedure annotation get ignored", () {
-      var future = clientUserService.notAnnotated(new UserSearch()..name = "TEST")
+      var future = remoteClientUser.notAnnotated(new UserSearch()..name = "TEST")
           .then((_) => fail("Shouldn't be reached"))
           .catchError((client_lib.IrisException excp) {
             expect(excp.errorCode, equals(IrisErrorCode.IRIS_PROCEDURE_NOT_FOUND.value));
@@ -183,14 +183,14 @@ main() {
       expect(future, completes);
     });
     test("serving normal message works()", () {
-      var future = clientUserService.search(new UserSearch()..name = "TEST").then((User user) {
+      var future = remoteClientUser.search(new UserSearch()..name = "TEST").then((User user) {
         expect(user.email, equals("eee@mail.com"));
         expect(user.name, equals("test name"));
       });
       expect(future, completes);
     });
     test("filters work properly", () {
-      var future = clientUserService.unauthorized(new UserSearch()..name = "TEST")
+      var future = remoteClientUser.unauthorized(new UserSearch()..name = "TEST")
           .then((_) => fail("Shouldn't be reached"))
           .catchError((client_lib.IrisException excp) {
             expect(excp.errorCode, equals(IrisErrorCode.IRIS_REJECTED_BY_FILTER.value));
@@ -200,7 +200,7 @@ main() {
       expect(future, completes);
     });
     test("ProcedureExceptions get transmitted properly", () {
-      var future = clientUserService.throws(new UserSearch()..name = "TEST")
+      var future = remoteClientUser.throws(new UserSearch()..name = "TEST")
           .then((_) => fail("Shouldn't be reached"))
           .catchError((client_lib.IrisException excp) {
             expect(excp.errorCode, equals(ErrorCode.ERROR_CODE_TEST.value));
@@ -210,7 +210,7 @@ main() {
       expect(future, completes);
     });
     test("random exceptions get sanitized properly", () {
-      var future = clientUserService.throwsRandomException()
+      var future = remoteClientUser.throwsRandomException()
           .then((_) => fail("Shouldn't be reached"))
           .catchError((client_lib.IrisException excp) {
             expect(excp.errorCode, equals(IrisErrorCode.IRIS_INTERNAL_SERVER_ERROR.value));
@@ -220,7 +220,7 @@ main() {
       expect(future, completes);
     });
     test("procedures can accept requests without pb messages", () {
-      var future = clientUserService.noMessage()
+      var future = remoteClientUser.noMessage()
           .then((User user) {
             expect(user.email, equals("eee@mail.com"));
             expect(user.name, equals("test name"));
@@ -229,7 +229,7 @@ main() {
       expect(future, completes);
     });
     test("procedures can not return pb messages", () {
-      var future = clientUserService.noReturnMessage(new UserSearch()..name = "no return message")
+      var future = remoteClientUser.noReturnMessage(new UserSearch()..name = "no return message")
           .then((_) {
             expect(_, isNull);
           });
@@ -237,7 +237,7 @@ main() {
       expect(future, completes);
     });
     test("procedures can not require any pb messages", () {
-      var future = clientUserService.noMessages()
+      var future = remoteClientUser.noMessages()
           .then((_) {
         expect(_, isNull);
       });
@@ -245,7 +245,7 @@ main() {
       expect(future, completes);
     });
     test("error codes get passed to the client properly", () {
-      var future = clientUserService.throwsProcedureException()
+      var future = remoteClientUser.throwsProcedureException()
           .then((_) => fail("Should never be reached"))
           .catchError((client_lib.IrisException exc) {
             expect(exc.errorCode, equals(ErrorCode.ERROR_CODE_TEST.value));
@@ -255,7 +255,7 @@ main() {
       expect(future, completes);
     });
     test("when a filter throws a ProcedureException it gets passed to the client properly", () {
-      var future = clientUserService.filterThrows()
+      var future = remoteClientUser.filterThrows()
           .then((_) => fail("Should never be reached"))
           .catchError((client_lib.IrisException exc) {
             expect(exc.errorCode, equals(ErrorCode.FILTER_ERROR_CODE.value));

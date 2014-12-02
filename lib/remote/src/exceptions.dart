@@ -2,7 +2,7 @@ part of iris;
 
 
 /**
- * The base class for all remote_services exceptions.
+ * The base class for all remotes exceptions.
  */
 class IrisException implements Exception {
 
@@ -38,16 +38,16 @@ class FilterException extends IrisException {
 
 
 /**
- * Thrown whenever you call [RemoteServices.addService] with a [Service] that
+ * Thrown whenever you call [Iris.addRemote] with a [Remote] that
  * contains invalid procedures.
  */
-class InvalidServiceDeclaration extends IrisException {
+class InvalidRemoteDeclaration extends IrisException {
 
-  final Service service;
+  final Remote remote;
 
 
-  InvalidServiceDeclaration._(String message, this.service) : super._(message);
-  String toString() => "The service you provided (${this.service.toString()}) was invalid: $message";
+  InvalidRemoteDeclaration._(String message, this.remote) : super._(message);
+  String toString() => "The remote you provided (${this.remote.toString()}) was invalid: $message";
 
 }
 

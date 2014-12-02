@@ -55,22 +55,22 @@ class IrisRequest {
  */
 abstract class IrisRequestHandler {
 
-  List<ServiceProcedure> _procedures;
+  List<RemoteProcedure> _procedures;
 
-  List<ServiceProcedure> get procedures => _procedures;
+  List<RemoteProcedure> get procedures => _procedures;
 
   ContextInitializer _contextInitializer;
 
   ContextInitializer get contextInitializer => _contextInitializer;
 
-  GeneratedMessage _getMessageFromBytes(ServiceProcedure procedure, List<int> bytes) {
+  GeneratedMessage _getMessageFromBytes(RemoteProcedure procedure, List<int> bytes) {
     try {
       GeneratedMessage message = reflectClass(procedure.expectedRequestType).newInstance(const Symbol("fromBuffer"), [bytes]).reflectee;
       message.check();
       return message;
     }
     catch (err) {
-      throw new _ErrorCodeException(IrisErrorCode.IRIS_INVALID_PB_MESSAGE_RECEIVED_BY_SERVICE, err.toString());
+      throw new _ErrorCodeException(IrisErrorCode.IRIS_INVALID_PB_MESSAGE_RECEIVED_BY_REMOTE, err.toString());
     }
   }
 
@@ -119,7 +119,7 @@ class IrisHttpRequestHandler extends IrisRequestHandler {
     var router = new Router(requests);
 
     // Setup the procedures
-    for (ServiceProcedure procedure in procedures) {
+    for (RemoteProcedure procedure in procedures) {
 
       log.info("- '${procedure.path}' - expects: '${procedure.expectedRequestType.toString()}', returns: '${procedure.responseType.toString()}'");
 
@@ -134,7 +134,7 @@ class IrisHttpRequestHandler extends IrisRequestHandler {
   }
 
 
-  Future _handleRequest(HttpRequest req, ServiceProcedure procedure) {
+  Future _handleRequest(HttpRequest req, RemoteProcedure procedure) {
 
     GeneratedMessage requestMessage;
     Context context;

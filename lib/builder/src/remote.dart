@@ -1,4 +1,4 @@
-part of remote_services_builder;
+part of remotes_builder;
 
 
 
@@ -7,23 +7,23 @@ String _lcFirst(String txt) => "${txt[0].toLowerCase()}${txt.substring(1)}";
 
 
 
-class CompiledService {
+class CompiledRemote {
 
 
-  final String serviceName;
+  final String remoteName;
 
-  String get fileName => "${_lcFirst(serviceName.replaceAllMapped(new RegExp("(.+)([A-Z])"), (match) => "${match.group(1)}_${match.group(2).toLowerCase()}"))}.dart";
+  String get fileName => "${_lcFirst(remoteName.replaceAllMapped(new RegExp("(.+)([A-Z])"), (match) => "${match.group(1)}_${match.group(2).toLowerCase()}"))}.dart";
 
-  String get lowerCaseServiceName => _lcFirst(serviceName);
+  String get lowerCaseRemoteName => _lcFirst(remoteName);
 
-  List<ServiceProcedure> procedures = [];
+  List<RemoteProcedure> procedures = [];
 
   String targetDirectory;
 
 
   String relativePathToPbManifest;
 
-  CompiledService(this.serviceName, this.targetDirectory, this.relativePathToPbManifest);
+  CompiledRemote(this.remoteName, this.targetDirectory, this.relativePathToPbManifest);
 
 
 
@@ -40,15 +40,15 @@ class CompiledService {
     var compiledString = "$generatedNotice";
 
     compiledString += """
-library generated_${lowerCaseServiceName};
+library generated_${lowerCaseRemoteName};
 
 import "dart:async";
 import "package:iris/client/client.dart";
 import "${relativePathToPbManifest}";
 
-class $serviceName extends Service {
+class $remoteName extends Remote {
 
-  $serviceName(IrisClient client) : super(client);
+  $remoteName(IrisClient client) : super(client);
 
 """;
 
