@@ -160,11 +160,13 @@ main() {
 
   var remotes = getRemotes();
 
-  var client = new HttpIrisClient(Uri.parse("http://localhost:$PORT"));
-  var remoteClientUser = new RemoteClientUser(client);
+  HttpIrisClient client;
+  RemoteClientUser remoteClientUser;
 
 
   setUp(() {
+    client = new HttpIrisClient(Uri.parse("http://localhost:$PORT"));
+    remoteClientUser = new RemoteClientUser(client);
     return remotes.startServer();
   });
 
@@ -236,13 +238,9 @@ main() {
 
       expect(future, completes);
     });
-    test("procedures can not require any pb messages", () {
-      var future = remoteClientUser.noMessages()
-          .then((_) {
-        expect(_, isNull);
-      });
-
-      expect(future, completes);
+    test("procedures can not require any pb messages", () async {
+      var response = await remoteClientUser.noMessages();
+      expect(response, isNull);
     });
     test("error codes get passed to the client properly", () {
       var future = remoteClientUser.throwsProcedureException()
@@ -251,6 +249,24 @@ main() {
             expect(exc.errorCode, equals(ErrorCode.ERROR_CODE_TEST.value));
           });
 
+      expect(future, completes);
+    });
+    test("irisClient.onError fires events on error", () async {
+      var fireCount = 0;
+      var completer = new Completer();
+      var future = completer.future;
+
+      remoteClientUser.client.onError.listen((client_lib.IrisException exception) {
+        expect(exception.errorCode, ErrorCode.ERROR_CODE_TEST.value);
+        completer.complete();
+      });
+
+      try {
+        await remoteClientUser.throwsProcedureException();
+      }
+      on IrisException catch (exc) {
+        expect(exc.errorCode, equals(ErrorCode.ERROR_CODE_TEST.value));
+      }
 
       expect(future, completes);
     });

@@ -40,8 +40,22 @@ class IrisException implements Exception {
 abstract class IrisClient {
 
 
+  /// Controlling [onError]
+  StreamController<IrisException> _onErrorController;
+
+  /// You can listen on this stream to get all exceptions that are generated
+  /// by this client. This allows you to globally listen to exceptions (for
+  /// example, AuthenticationRequired error codes).
+  Stream<IrisException> onError;
+
+  IrisClient() {
+    _onErrorController = new StreamController<IrisException>();
+    onError = _onErrorController.stream.asBroadcastStream();
+  }
+
+
   /**
-   * This is the method used to communicate with the remote remote.
+   * This is the method used to communicate with the remote.
    */
   Future<GeneratedMessage> dispatch(String path, GeneratedMessage requestMessage, Function convertToMessage, [requiredRequestMessage = true]) {
     if (requiredRequestMessage) {
@@ -56,6 +70,10 @@ abstract class IrisClient {
             throw new IrisException(IrisErrorCode.IRIS_REQUIRED_PB_MESSAGE_NOT_PROVIDED.value);
           }
           return responseMessage;
+        })
+        .catchError((IrisException exception) {
+          _onErrorController.add(exception);
+          throw exception;
         });
   }
 

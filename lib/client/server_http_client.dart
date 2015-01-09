@@ -30,7 +30,7 @@ class HttpIrisClient extends IrisClient {
   /// The base URI for all requests.
   final Uri baseUri;
 
-  HttpIrisClient(this.baseUri);
+  HttpIrisClient(this.baseUri) : super();
 
 
   /**

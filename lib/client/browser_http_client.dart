@@ -31,7 +31,7 @@ class HttpIrisClient extends IrisClient {
 
   final bool withCredentials;
 
-  HttpIrisClient(this.baseUri, {this.withCredentials: true});
+  HttpIrisClient(this.baseUri, {this.withCredentials: true}) : super();
 
 
   /**
