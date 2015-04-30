@@ -26,7 +26,7 @@ part "src/remote.dart";
 
 
 
-Logger log = new Logger("Remotes");
+Logger log = new Logger("Iris");
 
 
 
