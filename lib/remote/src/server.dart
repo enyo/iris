@@ -191,6 +191,8 @@ class IrisHttpRequestHandler extends IrisRequestHandler {
             errorMessage = "The filter '${err.filterName}' rejected the request.";
           }
 
+          log.info('Got error from procedure $procedure: $errorMessage $err');
+
           _sendError(req, errorCode, errorMessage);
 
         });
