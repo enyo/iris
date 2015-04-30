@@ -134,71 +134,66 @@ class IrisHttpRequestHandler extends IrisRequestHandler {
   }
 
 
-  Future _handleRequest(HttpRequest req, RemoteProcedure procedure) {
+  Future _handleRequest(HttpRequest req, RemoteProcedure procedure) async {
+
+    log.fine('Handling request ${req.uri}...');
 
     GeneratedMessage requestMessage;
-    Context context;
 
     var serviceRequest = new IrisRequest.fromHttp(req);
 
-    Future reqMsgFuture;
-
-    if (procedure.expectedRequestType == null) {
-      reqMsgFuture = new Future.value();
-    }
-    else {
-      reqMsgFuture = req.fold(new BytesBuilder(), (builder, bytes) => builder..add(bytes))
-          .then((BytesBuilder builder) {
-            requestMessage = _getMessageFromBytes(procedure, builder.takeBytes());
-          });
+    if (procedure.expectedRequestType != null) {
+      BytesBuilder builder = await req.fold(new BytesBuilder(), (builder, bytes) => builder..add(bytes));
+      requestMessage = _getMessageFromBytes(procedure, builder.takeBytes());
     }
 
-    // First get the protocol buffer from the request
-    return reqMsgFuture.then((_) => contextInitializer(serviceRequest))
-        .then((Context ctx) {
-          context = ctx;
+    try {
+      // First get the protocol buffer from the request
+      log.finest('Initializing context for request...');
+      Context context = await contextInitializer(serviceRequest);
 
-          var future = new Future.value();
+      // Call all filters in sequence
+      for (var filter in procedure.filterFunctions) {
+        log.finest('Invoking filter $filter on request...');
+        bool filterResult = await filter(context);
+        if (filterResult == false) throw new FilterException(filter);
+      }
 
-          // Call all filters in sequence
-          for (var filter in procedure.filterFunctions) {
-            future = future
-                .then((_) => filter(context))
-                .then((bool filterResult) {
-                  if (filterResult == false) throw new FilterException(filter);
-                });
-          }
+      // Invoke the procedure
+      log.finest('Invoking procedure...');
+      var responseMessage = await procedure.invoke(context, requestMessage);
 
-          return future;
-        })
-        // Invoke the procedure
-        .then((_) => procedure.invoke(context, requestMessage))
-        // And send the response
-        // Not adding the [GeneratedMessage] type here, since not all procedures
-        // need to return a GeneratedMessage.
-        .then((responseMessage) => _sendMessage(req, procedure.responseType == null ? null : responseMessage))
-        .catchError((err) {
+      // And send the response
+      // Not adding the [GeneratedMessage] type here, since not all procedures
+      // need to return a GeneratedMessage.
+      if (procedure.responseType != null) {
+        log.finest('Sending procedure response (${procedure.responseType})...');
+      }
+      else {
+        log.finest('Procedure does not have response type. Closing request...');
+      }
+      await _sendMessage(req, procedure.responseType == null ? null : responseMessage);
+    }
+    catch (err) {
+      IrisErrorCode errorCode = IrisErrorCode.IRIS_INTERNAL_SERVER_ERROR;
+      String errorMessage = err.toString();
 
-          IrisErrorCode errorCode = IrisErrorCode.IRIS_INTERNAL_SERVER_ERROR;
-          String errorMessage = err.toString();
+      if (err is _ErrorCodeException || err is ProcedureException) {
+        errorCode = err.errorCode;
+        errorMessage = err.message;
+      }
+      else if (err is FilterException) {
+        errorCode = IrisErrorCode.IRIS_REJECTED_BY_FILTER;
+        errorMessage = "The filter '${err.filterName}' rejected the request.";
+      }
 
-          if (err is _ErrorCodeException || err is ProcedureException) {
-            errorCode = err.errorCode;
-            errorMessage = err.message;
-          }
-          else if (err is FilterException) {
-            errorCode = IrisErrorCode.IRIS_REJECTED_BY_FILTER;
-            errorMessage = "The filter '${err.filterName}' rejected the request.";
-          }
+      log.info('Got error from procedure $procedure: $errorMessage $err');
 
-          log.info('Got error from procedure $procedure: $errorMessage $err');
-
-          _sendError(req, errorCode, errorMessage);
-
-        });
+      await _sendError(req, errorCode, errorMessage);
+    }
   }
 
-  serveNotFound(HttpRequest req) {
+  Future serveNotFound(HttpRequest req) {
     log.finest("Sending 404 for procedure: ${req.uri.path}");
 
     _sendError(req, IrisErrorCode.IRIS_PROCEDURE_NOT_FOUND, "The requested procedure was not found.");
@@ -210,15 +205,15 @@ class IrisHttpRequestHandler extends IrisRequestHandler {
   /**
    * This is the function to call to send data to the client.
    */
-  _sendMessage(HttpRequest req, GeneratedMessage message) {
-    _send(req, message == null ? [] : message.writeToBuffer());
+  Future _sendMessage(HttpRequest req, GeneratedMessage message) {
+    return _send(req, message == null ? [] : message.writeToBuffer());
   }
 
 
   /**
    * Sends the write error protocol buffer to the client.
    */
-  _sendError(HttpRequest req, IrisErrorCode errorCode, String errorMessage) {
+  Future _sendError(HttpRequest req, IrisErrorCode errorCode, String errorMessage) {
 
     int statusCode;
 
@@ -233,7 +228,7 @@ class IrisHttpRequestHandler extends IrisRequestHandler {
         ..errorCode = errorCode.value
         ..message = errorMessage;
 
-    _send(req, message.writeToBuffer(), statusCode);
+    return _send(req, message.writeToBuffer(), statusCode);
   }
 
 
@@ -254,7 +249,7 @@ class IrisHttpRequestHandler extends IrisRequestHandler {
   /**
    * Don't use this method directly. Use [_sendError] or [_sendMessage] instead.
    */
-  _send(HttpRequest req, List<int> body, [int statusCode = HttpStatus.OK]) {
+  Future _send(HttpRequest req, List<int> body, [int statusCode = HttpStatus.OK]) {
 
     setCorsHeaders(req);
 
