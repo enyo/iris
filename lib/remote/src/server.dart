@@ -123,7 +123,9 @@ class IrisHttpRequestHandler extends IrisRequestHandler {
 
       log.info("- '${procedure.path}' - expects: '${procedure.expectedRequestType.toString()}', returns: '${procedure.responseType.toString()}'");
 
-      router.serve(procedure.path, method: "POST").listen((HttpRequest req) {
+      var method = procedure.expectedRequestType == null ? "GET" : "POST";
+
+      router.serve(procedure.path, method: method).listen((HttpRequest req) {
 
         _handleRequest(req, procedure);
 

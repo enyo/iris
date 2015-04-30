@@ -53,15 +53,17 @@ class HttpIrisClient extends IrisClient {
    * You should never invoke this method directly but use [dispatch].
    */
   Future<GeneratedMessage> query(String path, GeneratedMessage requestMessage, Function convertToMessage) {
-    log.finest("Requesting address $path");
-
     var completer = new Completer();
 
     Uri uri = getUriFromPath(path);
 
     var xhr = new HttpRequest();
 
-    xhr.open("POST", uri.toString(), async: true);
+    var method = requestMessage == null ? 'GET' : 'POST';
+
+    log.finest("Requesting address $path with $method");
+
+    xhr.open(method, uri.toString(), async: true);
 
     xhr.withCredentials = withCredentials;
 

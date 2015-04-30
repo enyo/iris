@@ -54,11 +54,21 @@ class HttpIrisClient extends IrisClient {
 
     Uri uri = getUriFromPath(path);
 
-    log.finest("Requesting address ${uri.toString()}");
-
     HttpClientResponse response;
 
-    return client.postUrl(uri)
+    var requestFuture;
+
+    if (requestMessage == null) {
+      log.finest("Issuing GET request to ${uri.toString()}");
+      requestFuture = client.getUrl(uri);
+
+    }
+    else {
+      log.finest("Issuing POST request to ${uri.toString()}");
+      requestFuture = client.postUrl(uri);
+    }
+
+    return requestFuture
       .then((HttpClientRequest request) {
         // Prepare the request then call close on it to send it.
 
