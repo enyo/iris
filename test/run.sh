@@ -1,3 +1,3 @@
 #!/bin/bash
 
-dart --enable-async -c test/all_tests.dart
+dart -c test/all_tests.dart
