@@ -1,5 +1,26 @@
 # Iris
 
+**I'm discontinuing this project.**
+
+When I wrote this library, [`dart-lang/rpc`](https://github.com/dart-lang/rpc) did not exist yet.
+I think that their approach, with the
+[Discovery Document](https://developers.google.com/discovery/v1/reference/apis), is more future proof and
+makes it easier for other developers to consume the API.
+
+I personally like the idea of using [Protocol Buffers](https://developers.google.com/protocol-buffers/?hl=en)
+as a serialization format (which is the format I used in `iris`), but JSON definitely makes it easier
+to be used, and doesn't require third party developers to use a compiled client to communicate with the API.
+
+There are two main advantages with Protocol Buffers:
+
+1. They handle serialization automatically (and check that all values are set properly)
+2. They are fast
+
+The first advantage is handled by the RPC library itself, and the second one is not as important in a public API
+that has the overhead of HTTP requests and is mostly used on the internet (compared to the intranet).
+
+* * *
+
 [![Build Status](https://drone.io/github.com/enyo/iris/status.png)](https://drone.io/github.com/enyo/iris/latest)
 
 A complete abstraction of client ↔ server communication.
